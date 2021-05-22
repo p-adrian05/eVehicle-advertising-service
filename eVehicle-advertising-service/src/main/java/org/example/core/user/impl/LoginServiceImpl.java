@@ -10,6 +10,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.stereotype.Service;
 
 import javax.security.auth.message.AuthException;
 import java.sql.Timestamp;
@@ -18,6 +19,7 @@ import java.util.Optional;
 
 @RequiredArgsConstructor
 @Slf4j
+@Service
 public class LoginServiceImpl implements LoginService {
 
     private final AuthenticationManager authenticationManager;

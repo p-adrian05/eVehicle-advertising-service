@@ -1,12 +1,11 @@
 package org.example.core.user.model;
 
 import lombok.Builder;
-import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import org.example.core.image.model.ImageDto;
 
-import java.awt.Image;
 import java.sql.Timestamp;
 import java.util.List;
 
@@ -27,7 +26,7 @@ public class UserDto {
 
     private final Timestamp created;
 
-    private final Image profileImage;
+    private final ImageDto profileImage;
 
     private final List<String> roles;
 }

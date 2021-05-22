@@ -3,11 +3,14 @@ package org.example.core.user.impl;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.example.core.image.model.ImageDto;
+import org.example.core.image.persistence.entity.ImageEntity;
+import org.example.core.image.persistence.persistence.ImageRepository;
+import org.example.core.role.exception.UnknownRoleException;
 import org.example.core.role.persistence.entity.RoleEntity;
 import org.example.core.role.persistence.repository.RoleRepository;
 import org.example.core.user.UserService;
 import org.example.core.user.exception.EmailAlreadyExistsException;
-import org.example.core.role.exception.UnknownRoleException;
 import org.example.core.user.exception.UnknownUserException;
 import org.example.core.user.exception.UsernameAlreadyExistsException;
 import org.example.core.user.model.CreateUserDto;
@@ -22,7 +25,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
-import java.awt.Image;
 import java.sql.Timestamp;
 import java.util.Date;
 import java.util.Optional;
@@ -37,9 +39,13 @@ public class UserServiceImpl implements UserService {
     private final UserDataRepository userDataRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
+    private final ImageRepository imageRepository;
 
     @Value("${user.default-role:USER}")
     private String DEFAULT_ROLE;
+
+    @Value("${user.default-image_id:1}")
+    private String DEFAULT_IMAGE_ID;
 
     @Override
     @Transactional
@@ -50,7 +56,7 @@ public class UserServiceImpl implements UserService {
         if(userRepository.existsUserEntityByEmail(createUserDto.getEmail())){
             throw new EmailAlreadyExistsException(String.format("Email already exists: %s",createUserDto.getEmail()));
         }
-        UserEntity userEntity =  createNewUserEntity(createUserDto);
+        UserEntity userEntity = createNewUserEntity(createUserDto);
         UserEntity savedUser = userRepository.save(userEntity);
         UserDataEntity userData = new UserDataEntity();
         userData.setUserEntity(savedUser);
@@ -110,7 +116,7 @@ public class UserServiceImpl implements UserService {
             .created(userEntity.getCreated())
             .email(userEntity.getEmail())
             .enabled(userEntity.isEnabled())
-            .profileImage(Image.builder()
+            .profileImage(ImageDto.builder()
                 .id(userEntity.getProfileImage().getId())
                 .path(userEntity.getProfileImage().getPath())
                 .uploadedTime(userEntity.getProfileImage().getUploadedTime())
@@ -118,9 +124,9 @@ public class UserServiceImpl implements UserService {
             .lastLogin(userEntity.getLastLogin())
             .build();
     }
-//todo
-    private ImageEntity queryDefaultProfileImageEntity(){
-        return null;
+    private ImageEntity queryDefaultProfileImageEntity() {
+        Optional<ImageEntity> imageEntity = imageRepository.findById(Integer.valueOf(DEFAULT_IMAGE_ID));
+        return imageEntity.orElse(null);
     }
 
     private UserDataDto convertUserDataEntityToUserDataDto(UserDataEntity userDataEntity){
@@ -131,7 +137,8 @@ public class UserServiceImpl implements UserService {
             .publicEmail(userDataEntity.getPublicEmail())
             .build();
     }
-    private UserEntity createNewUserEntity(CreateUserDto createUserDto) throws UnknownRoleException {
+    private UserEntity createNewUserEntity(CreateUserDto createUserDto)
+        throws UnknownRoleException {
        String hashedPassword = passwordEncoder.encode(createUserDto.getPassword());
        String activationCode = UUID.randomUUID() + createUserDto.getUsername();
        UserEntity userEntity =  UserEntity.builder()

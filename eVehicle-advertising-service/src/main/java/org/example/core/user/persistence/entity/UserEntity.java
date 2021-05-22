@@ -6,6 +6,8 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+import org.example.core.advertising.persistence.entity.AdvertisementEntity;
+import org.example.core.image.persistence.entity.ImageEntity;
 import org.example.core.role.persistence.entity.RoleEntity;
 import org.hibernate.annotations.NaturalId;
 import org.hibernate.annotations.NaturalIdCache;
@@ -96,12 +98,9 @@ public class UserEntity {
     private Set<AdvertisementEntity> savedAds = new HashSet<>();
 
     public void addSavedAd(AdvertisementEntity entity){
-        if (savedAds.contains(entity)){
-            return;
-        }
-        savedAds.add(entity);
+        this.getSavedAds().add(entity);
     }
     public void removeSavedAd(AdvertisementEntity entity){
-        this.savedAds.remove(entity);
+        this.getSavedAds().remove(entity);
     }
 }
