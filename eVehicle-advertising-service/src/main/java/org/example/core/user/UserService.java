@@ -1,7 +1,7 @@
 package org.example.core.user;
 
 import org.example.core.user.exception.EmailAlreadyExistsException;
-import org.example.core.user.exception.UnknownRoleException;
+import org.example.core.role.exception.UnknownRoleException;
 import org.example.core.user.exception.UnknownUserException;
 import org.example.core.user.exception.UsernameAlreadyExistsException;
 import org.example.core.user.model.CreateUserDto;

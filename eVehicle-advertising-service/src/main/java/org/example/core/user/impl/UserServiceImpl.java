@@ -3,9 +3,11 @@ package org.example.core.user.impl;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.example.core.role.persistence.entity.RoleEntity;
+import org.example.core.role.persistence.repository.RoleRepository;
 import org.example.core.user.UserService;
 import org.example.core.user.exception.EmailAlreadyExistsException;
-import org.example.core.user.exception.UnknownRoleException;
+import org.example.core.role.exception.UnknownRoleException;
 import org.example.core.user.exception.UnknownUserException;
 import org.example.core.user.exception.UsernameAlreadyExistsException;
 import org.example.core.user.model.CreateUserDto;
@@ -95,7 +97,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Optional<UserDto> getUserByName(String username){
-        return convertUserEntityToDto(userRepository.findUserEntityByUsername(username));
+        return convertUserEntityToDto(userRepository.findUserWithRolesAndImage(username));
     }
     @Override
     public Optional<UserDto> getUserByActivationCode(String code) {
@@ -121,7 +123,7 @@ public class UserServiceImpl implements UserService {
         return null;
     }
 
-    public UserDataDto convertUserDataEntityToUserDataDto(UserDataEntity userDataEntity){
+    private UserDataDto convertUserDataEntityToUserDataDto(UserDataEntity userDataEntity){
         return UserDataDto.builder()
             .city(userDataEntity.getCity())
             .fullName(userDataEntity.getFullName())
@@ -159,7 +161,7 @@ public class UserServiceImpl implements UserService {
         log.info("Queried user : {}",userEntity.get());
         return userEntity.get();
     }
-    public UserDataEntity queryUserData(String username) throws UnknownUserException {
+    private UserDataEntity queryUserData(String username) throws UnknownUserException {
         Optional<UserDataEntity> userDataEntity = userDataRepository.findUserDataEntityByUserEntityUsername(username);
         if(userDataEntity.isEmpty()){
             throw new UnknownUserException(String.format("User not found: %s",username));
@@ -167,8 +169,8 @@ public class UserServiceImpl implements UserService {
         log.info("Queried userdata : {}",userDataEntity.get());
         return userDataEntity.get();
     }
-    //todo
-    public RoleEntity queryRoleByRoleName(String roleName) throws UnknownRoleException {
+
+    private RoleEntity queryRoleByRoleName(String roleName) throws UnknownRoleException {
         Optional<RoleEntity> roleEntity = roleRepository.findRoleEntityByRoleName(roleName);
         if(roleEntity.isEmpty()){
             throw new UnknownRoleException(String.format("Role not found: %s",roleName));

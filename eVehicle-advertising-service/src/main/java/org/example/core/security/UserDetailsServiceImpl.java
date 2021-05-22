@@ -1,6 +1,7 @@
 package org.example.core.security;
 
 import lombok.RequiredArgsConstructor;
+import org.example.core.role.persistence.entity.RoleEntity;
 import org.example.core.user.model.AuthUserDto;
 import org.example.core.user.persistence.entity.UserEntity;
 import org.example.core.user.persistence.repository.UserRepository;

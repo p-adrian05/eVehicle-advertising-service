@@ -1,4 +1,4 @@
-package org.example.core.user.exception;
+package org.example.core.role.exception;
 
 public class UnknownRoleException extends Exception{
 

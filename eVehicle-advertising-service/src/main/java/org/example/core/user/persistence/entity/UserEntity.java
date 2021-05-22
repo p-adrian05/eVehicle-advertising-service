@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+import org.example.core.role.persistence.entity.RoleEntity;
 import org.hibernate.annotations.NaturalId;
 import org.hibernate.annotations.NaturalIdCache;
 
@@ -22,6 +23,7 @@ import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import java.sql.Timestamp;
 import java.util.HashSet;
+import java.util.Set;
 
 @Data
 @NoArgsConstructor
@@ -73,20 +75,14 @@ public class UserEntity {
     )
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
-    private Set<RoleEntity> roles = new HashSet<>();
+    private Set<RoleEntity> roles;
 
     public void addRole(RoleEntity role){
-        if(roles == null){
-            this.roles = new HashSet<>();
-        }
-        if (roles.contains(role)){
-            return;
-        }
-        roles.add(role);
+      this.getRoles().add(role);
     }
 
     public void removeRole(RoleEntity role){
-        this.roles.remove(role);
+        this.getRoles().remove(role);
     }
 
     @ManyToMany(fetch = FetchType.LAZY)
