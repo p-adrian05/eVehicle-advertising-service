@@ -8,6 +8,7 @@ import org.example.core.user.exception.EmailAlreadyExistsException;
 import org.example.core.user.exception.UnknownRoleException;
 import org.example.core.user.exception.UnknownUserException;
 import org.example.core.user.exception.UsernameAlreadyExistsException;
+import org.example.core.user.model.CreateUserDto;
 import org.example.core.user.model.UserDataDto;
 import org.example.core.user.model.UserDto;
 import org.example.core.user.persistence.entity.UserDataEntity;
@@ -40,26 +41,14 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public void createUser(@NonNull UserDto user) throws UsernameAlreadyExistsException, EmailAlreadyExistsException, UnknownRoleException {
-        if(userRepository.existsUserEntityByUsername(user.getUsername())){
-            throw new UsernameAlreadyExistsException(String.format("Username already exists: %s",user.getUsername()));
+    public void createUser(@NonNull CreateUserDto createUserDto) throws UsernameAlreadyExistsException, EmailAlreadyExistsException, UnknownRoleException {
+        if(userRepository.existsUserEntityByUsername(createUserDto.getUsername())){
+            throw new UsernameAlreadyExistsException(String.format("Username already exists: %s",createUserDto.getUsername()));
         }
-        if(userRepository.existsUserEntityByEmail(user.getEmail())){
-            throw new EmailAlreadyExistsException(String.format("Email already exists: %s",user.getEmail()));
+        if(userRepository.existsUserEntityByEmail(createUserDto.getEmail())){
+            throw new EmailAlreadyExistsException(String.format("Email already exists: %s",createUserDto.getEmail()));
         }
-        UserEntity userEntity =  createNewUserEntity(user);
-        userEntity.addRole(queryRoleByRoleName(DEFAULT_ROLE));
-        try {
-            ImageEntity defImage = entityQuery.queryDefaultProfileImage();
-            userEntity.setProfileImage(defImage);
-        } catch (UnknownImageException e) {
-            log.error("Failed to query default profile image");
-            userEntity.setProfileImage(null);
-        }
-        userEntity.setPassword(passwordEncoder.encode(user.getPassword()));
-        String code = UUID.randomUUID() +user.getUsername();
-        userEntity.setActivation(code);
-
+        UserEntity userEntity =  createNewUserEntity(createUserDto);
         UserEntity savedUser = userRepository.save(userEntity);
         UserDataEntity userData = new UserDataEntity();
         userData.setUserEntity(savedUser);
@@ -74,15 +63,6 @@ public class UserServiceImpl implements UserService {
         userEntity.setEnabled(false);
         userRepository.save(userEntity);
         log.info("Disabled user entity: {}",userEntity);
-    }
-
-    @Override
-    @Transactional
-    public void updateUser(@NonNull UserDto user) throws UnknownUserException {
-        UserEntity userEntity = queryUserEntity(user.getUsername());
-        userEntity.setLastLogin(user.getLastLogin());
-        log.info("Updated user entity: {}",userEntity);
-        userRepository.save(userEntity);
     }
     @Transactional
     @Override
@@ -115,31 +95,17 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Optional<UserDto> getUserByName(String username){
-        return convertUserEntityToDto(userRepository.findUserEntityByUsernameWithImage(username));
+        return convertUserEntityToDto(userRepository.findUserEntityByUsername(username));
     }
     @Override
     public Optional<UserDto> getUserByActivationCode(String code) {
         return convertUserEntityToDto(userRepository.findByActivation(code));
     }
-//    @Override
-//    public User getUserByNameWithRoles(String username) throws UnknownUserException {
-//        UserEntity userEntity = entityQuery.queryUserEntityWithRoles(username);
-//        return User.builder()
-//            .username(userEntity.getUsername())
-//            .created(userEntity.getCreated())
-//            .activation(userEntity.getActivation())
-//            .email(userEntity.getEmail())
-//            .enabled(userEntity.isEnabled())
-//            .password(userEntity.getPassword())
-//            .roles(userEntity.getRoles().stream().map(RoleEntity::getRoleName).collect(Collectors.toList()))
-//            .build();
-//    }
 
     public UserDto convertUserEntityToUserDto(UserEntity userEntity){
         return UserDto.builder()
             .username(userEntity.getUsername())
             .created(userEntity.getCreated())
-            .activation(userEntity.getActivation())
             .email(userEntity.getEmail())
             .enabled(userEntity.isEnabled())
             .profileImage(Image.builder()
@@ -150,6 +116,11 @@ public class UserServiceImpl implements UserService {
             .lastLogin(userEntity.getLastLogin())
             .build();
     }
+//todo
+    private ImageEntity queryDefaultProfileImageEntity(){
+        return null;
+    }
+
     public UserDataDto convertUserDataEntityToUserDataDto(UserDataEntity userDataEntity){
         return UserDataDto.builder()
             .city(userDataEntity.getCity())
@@ -158,16 +129,21 @@ public class UserServiceImpl implements UserService {
             .publicEmail(userDataEntity.getPublicEmail())
             .build();
     }
-    public static UserEntity createNewUserEntity(UserDto user){
-        return UserEntity.builder()
-            .username(user.getUsername())
-            .password(user.getPassword())
+    private UserEntity createNewUserEntity(CreateUserDto createUserDto) throws UnknownRoleException {
+       String hashedPassword = passwordEncoder.encode(createUserDto.getPassword());
+       String activationCode = UUID.randomUUID() + createUserDto.getUsername();
+       UserEntity userEntity =  UserEntity.builder()
+            .username(createUserDto.getUsername())
+            .password(hashedPassword)
             .created(new Timestamp(new Date().getTime()))
-            .activation(user.getActivation())
-            .email(user.getEmail())
+            .activation(activationCode)
+            .email(createUserDto.getEmail())
             .enabled(false)
             .lastLogin(null)
+            .profileImage(queryDefaultProfileImageEntity())
             .build();
+        userEntity.addRole(queryRoleByRoleName(DEFAULT_ROLE));
+        return userEntity;
     }
     private Optional<UserDto> convertUserEntityToDto(Optional<UserEntity> userEntity) {
         return userEntity.map(this::convertUserEntityToUserDto);
@@ -191,7 +167,7 @@ public class UserServiceImpl implements UserService {
         log.info("Queried userdata : {}",userDataEntity.get());
         return userDataEntity.get();
     }
-
+    //todo
     public RoleEntity queryRoleByRoleName(String roleName) throws UnknownRoleException {
         Optional<RoleEntity> roleEntity = roleRepository.findRoleEntityByRoleName(roleName);
         if(roleEntity.isEmpty()){

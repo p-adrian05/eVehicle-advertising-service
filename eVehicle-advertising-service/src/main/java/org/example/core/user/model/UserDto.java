@@ -19,13 +19,9 @@ public class UserDto {
 
     private final String username;
 
-    private final String password;
-
     private final String email;
 
     private final boolean enabled;
-
-    private final String activation;
 
     private final Timestamp lastLogin;
 
@@ -34,6 +30,4 @@ public class UserDto {
     private final Image profileImage;
 
     private final List<String> roles;
-
-    private final List<Advertisement> favAds;
 }

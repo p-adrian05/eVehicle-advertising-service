@@ -5,20 +5,15 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
-
 @Builder
 @EqualsAndHashCode
 @RequiredArgsConstructor
 @Getter
-public class UserDataDto {
+public class CreateUserDto {
 
     private final String username;
 
-    private final String city;
+    private final String password;
 
-    private final String fullName;
-
-    private final String publicEmail;
-
-    private final String phoneNumber;
+    private final String email;
 }
