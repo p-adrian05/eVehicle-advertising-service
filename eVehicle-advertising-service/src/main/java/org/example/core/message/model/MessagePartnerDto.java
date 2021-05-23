@@ -1,27 +1,21 @@
 package org.example.core.message.model;
 
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.RequiredArgsConstructor;
 
 import java.util.Objects;
 
 @Builder
-@AllArgsConstructor
-@NoArgsConstructor
-@ToString
+@RequiredArgsConstructor
 @Getter
-@Setter
 public class MessagePartnerDto {
 
-    private String partnerUsername;
+    private final String partnerUsername;
 
-    private String sentTime;
+    private final String sentTime;
 
-    private boolean isThereNewMessage;
+    private final boolean isThereNewMessage;
 
     @Override
     public boolean equals(Object o) {

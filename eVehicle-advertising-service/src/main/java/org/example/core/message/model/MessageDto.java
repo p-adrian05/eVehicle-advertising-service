@@ -1,27 +1,29 @@
 package org.example.core.message.model;
 
 import lombok.Builder;
-import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
 import java.sql.Timestamp;
 import java.util.List;
 
 
-@Data
 @Builder
 @EqualsAndHashCode
+@RequiredArgsConstructor
+@Getter
 public class MessageDto {
 
-    private int id;
+    private final int id;
 
-    private String content;
+    private final String content;
 
-    private boolean unread;
+    private final boolean unread;
 
-    private String senderUserName;
+    private final String senderUserName;
 
-    private List<String> receiverUsernames;
+    private final List<String> receiverUsernames;
 
-    private Timestamp sentTime;
+    private final Timestamp sentTime;
 }

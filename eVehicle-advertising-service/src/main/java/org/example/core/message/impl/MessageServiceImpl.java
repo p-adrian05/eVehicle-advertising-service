@@ -20,6 +20,7 @@ import org.example.core.user.persistence.repository.UserRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
@@ -112,25 +113,27 @@ public class MessageServiceImpl implements MessageService {
 
     @Override
     public Page<MessageDto> getMessagesByUsernames(String username1, String username2, Pageable pageable) throws UnknownUserException {
-        int user1Id = queryUserEntity(username1).getId();
-        int user2Id =  queryUserEntity(username2).getId();
-        log.info("Query messages for user: {}",user1Id);
-        log.info("Query messages for user: {}",user2Id);
-        return userMessageRepository.findBySenderAndReceiverIds(user1Id,user2Id,pageable)
+        UserEntity userEntity1 = queryUserEntity(username1);
+        UserEntity userEntity2 =  queryUserEntity(username2);
+        log.info("Query messages for user: {}",userEntity1.getUsername());
+        log.info("Query messages for user: {}",userEntity2.getUsername());
+        return userMessageRepository.findBySenderAndReceiverIds(userEntity1.getId(),userEntity2.getId(),pageable)
             .map(messageEntity ->{
-                MessageDto message = MessageDto.builder()
+
+                if(messageEntity.getId().getReceiverId() == userEntity1.getId()){
+                    messageEntity.setReceiverUser(userEntity1);
+                    messageEntity.setSenderUser(userEntity2);
+                }else{
+                    messageEntity.setReceiverUser(userEntity2);
+                    messageEntity.setSenderUser(userEntity1);
+                }
+                return MessageDto.builder()
                     .id(messageEntity.getMessage().getId())
                     .content(messageEntity.getMessage().getContent())
                     .sentTime(messageEntity.getSentTime())
+                    .senderUserName(messageEntity.getSenderUser().getUsername())
+                    .receiverUsernames(List.of(messageEntity.getReceiverUser().getUsername()))
                     .unread(messageEntity.isUnread()).build();
-                if(messageEntity.getId().getReceiverId() == user1Id){
-                    message.setReceiverUsernames(List.of(username1));
-                    message.setSenderUserName(username2);
-                }else{
-                    message.setReceiverUsernames(List.of(username2));
-                    message.setSenderUserName(username1);
-                }
-                return message;
             });
     }
 
@@ -172,8 +175,11 @@ public class MessageServiceImpl implements MessageService {
         Page<MessagePartnerDto> pagedPartnerNames = new PageImpl<>(partnerNames.subList(fromIndex, toIndex), pageable, partnerNames.size());
         return pagedPartnerNames
                 .map(partner-> {
-                    partner.setThereNewMessage(isThereNewMessage(username,partner.getPartnerUsername()));
-                    return partner;
+                    return MessagePartnerDto.builder()
+                        .isThereNewMessage(isThereNewMessage(username,partner.getPartnerUsername()))
+                        .sentTime(partner.getSentTime())
+                        .partnerUsername(partner.getPartnerUsername())
+                        .build();
                 });
     }
 
