@@ -7,7 +7,9 @@ import org.example.core.advertising.AdvertisementService;
 import org.example.core.advertising.exception.UnknownAdvertisementException;
 import org.example.core.advertising.exception.UnknownCategoryException;
 import org.example.core.advertising.model.AdDetailsDto;
+import org.example.core.advertising.model.AdLabelDto;
 import org.example.core.advertising.model.AdvertisementDto;
+import org.example.core.advertising.model.BasicAdDetailsDto;
 import org.example.core.advertising.persistence.AdState;
 import org.example.core.advertising.persistence.entity.AdDetailsEntity;
 import org.example.core.advertising.persistence.entity.AdvertisementEntity;
@@ -34,6 +36,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -79,17 +82,17 @@ public class AdvertisementServiceImpl implements AdvertisementService {
         typeEntity.setBrandEntity(getBrandEntity(advertisementDto.getBrand()));
 
         String folderName = "";
-        Map<String,MultipartFile> filesToSave  = new HashMap<>();
+        Map<String, MultipartFile> filesToSave = new HashMap<>();
         List<ImageDto> imageModels = new LinkedList<>();
         String[] pathValues;
 
-        for(Map.Entry<MultipartFile,ImageDto> entry: createImageModels(imageFiles).entrySet()){
+        for (Map.Entry<MultipartFile, ImageDto> entry : createImageModels(imageFiles).entrySet()) {
             pathValues = getFolderNameAndFilenameFromPath(entry.getValue().getPath());
-            if(folderName.equals("")){
+            if (folderName.equals("")) {
                 folderName = pathValues[0];
             }
             imageModels.add(entry.getValue());
-            filesToSave.put(pathValues[1],entry.getKey());
+            filesToSave.put(pathValues[1], entry.getKey());
         }
 
         log.info("Type entity for created advertisement: {}", typeEntity);
@@ -118,26 +121,29 @@ public class AdvertisementServiceImpl implements AdvertisementService {
         adDetailsEntity.setAdvertisement(newAdvertisementEntity);
         adDetailsRepository.save(adDetailsEntity);
 
-        storageService.store(filesToSave,folderName);
+        storageService.store(filesToSave, folderName);
 
         log.info("New AdDetailsEntity: {}", adDetailsEntity);
     }
-    private String[] getFolderNameAndFilenameFromPath(String path){
+
+    private String[] getFolderNameAndFilenameFromPath(String path) {
         String[] pathArray = path.split("/");
-        if(pathArray.length>=2){
-            return new String[]{pathArray[pathArray.length-2],pathArray[pathArray.length-1]};
+        if (pathArray.length >= 2) {
+            return new String[] {pathArray[pathArray.length - 2], pathArray[pathArray.length - 1]};
         }
-        return new String[]{"",""};
+        return new String[] {"", ""};
     }
-    private Map<MultipartFile, ImageDto> createImageModels(MultipartFile[] imageFiles){
+
+    private Map<MultipartFile, ImageDto> createImageModels(MultipartFile[] imageFiles) {
         String folderName = storageService.generateFolderName();
-        return Arrays.stream(imageFiles).map(image-> Map.entry(image,ImageDto.builder()
-            .path("/"+folderName+"/"+generateAdImageName("jpg"))
+        return Arrays.stream(imageFiles).map(image -> Map.entry(image, ImageDto.builder()
+            .path("/" + folderName + "/" + generateAdImageName("jpg"))
             .uploadedTime(new Timestamp(new Date().getTime()))
             .build())).collect(
             Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
-    private String generateAdImageName(String extension){
+
+    private String generateAdImageName(String extension) {
         StringBuilder name = new StringBuilder();
         name.append("ad");
         name.append(UUID.randomUUID());
@@ -145,22 +151,24 @@ public class AdvertisementServiceImpl implements AdvertisementService {
         name.append(extension);
         return name.toString();
     }
+
     @Override
     public String convertSortParamToValidForm(String sortParam) {
         Class<? extends Object> c = AdDetailsDto.class;
         Field[] fields = c.getDeclaredFields();
         String[] classNames = AdDetailsDto.class.getName().split("\\.");
-        String className = classNames[classNames.length-1];
+        String className = classNames[classNames.length - 1];
         className = String.valueOf(className.charAt(0)).toLowerCase() + className.substring(1);
         List<String> fieldsName = new LinkedList<>();
-        for(Field field : fields ){
+        for (Field field : fields) {
             fieldsName.add(field.getName());
         }
-        if(fieldsName.contains(sortParam)){
-            return className + "."+sortParam;
+        if (fieldsName.contains(sortParam)) {
+            return className + "." + sortParam;
         }
         return sortParam;
     }
+
     @Override
     @Transactional
     public void updateAdvertisement(AdvertisementDto advertisementDto)
@@ -195,28 +203,31 @@ public class AdvertisementServiceImpl implements AdvertisementService {
 
     @Override
     @Transactional
-    public void updateAllAdvertisement(AdvertisementDto advertisement, AdDetailsDto adDetails, MultipartFile[] imageFiles)
-        throws UnknownAdvertisementException, UnknownCategoryException, FileUploadException, UnknownUserException {
-        List<String> imageFileNames = Arrays.stream(imageFiles).map(MultipartFile::getOriginalFilename).collect(Collectors.toList());
-        List<ImageDto> toDeleteImages =  getAdvertisementById(advertisement.getId()).getImages().stream()
-            .filter(image->!imageFileNames.contains(image.getPath())).collect(Collectors.toList());
-        List<String> newImageNames = imageFileNames.stream().filter(name -> name.contains("newAdImage")).collect(Collectors.toList());
+    public void updateAllAdvertisement(AdvertisementDto advertisement, AdDetailsDto adDetails,
+                                       MultipartFile[] imageFiles)
+        throws UnknownAdvertisementException, UnknownCategoryException, FileUploadException {
+        List<String> imageFileNames =
+            Arrays.stream(imageFiles).map(MultipartFile::getOriginalFilename).collect(Collectors.toList());
+        List<ImageDto> toDeleteImages = getAdvertisementById(advertisement.getId()).get().getImages().stream()
+            .filter(image -> !imageFileNames.contains(image.getPath())).collect(Collectors.toList());
+        List<String> newImageNames =
+            imageFileNames.stream().filter(name -> name.contains("newAdImage")).collect(Collectors.toList());
 
         List<ImageDto> imageModels = new LinkedList<>();
         String folderName = "";
         String[] pathValues;
-        Map<String,MultipartFile> filesToSave  = new HashMap<>();
-        Map<MultipartFile,ImageDto> newImageFileModelPairs = createImageModels(Arrays.stream(imageFiles)
+        Map<String, MultipartFile> filesToSave = new HashMap<>();
+        Map<MultipartFile, ImageDto> newImageFileModelPairs = createImageModels(Arrays.stream(imageFiles)
             .filter(imageFile -> newImageNames.contains(imageFile.getOriginalFilename()))
             .toArray(MultipartFile[]::new));
 
-        for(Map.Entry<MultipartFile,ImageDto> entry: newImageFileModelPairs.entrySet()){
+        for (Map.Entry<MultipartFile, ImageDto> entry : newImageFileModelPairs.entrySet()) {
             pathValues = getFolderNameAndFilenameFromPath(entry.getValue().getPath());
-            if(folderName.equals("")){
+            if (folderName.equals("")) {
                 folderName = pathValues[0];
             }
             imageModels.add(entry.getValue());
-            filesToSave.put(pathValues[1],entry.getKey());
+            filesToSave.put(pathValues[1], entry.getKey());
         }
         Arrays.stream(imageFiles)
             .filter(imageFile -> !newImageNames.contains(imageFile.getOriginalFilename()))
@@ -242,28 +253,32 @@ public class AdvertisementServiceImpl implements AdvertisementService {
             .state(advertisement.getState())
             .build();
 
-        storageService.store(filesToSave,folderName);
+        storageService.store(filesToSave, folderName);
         deleteImageFiles(toDeleteImages);
         this.updateAdDetails(adDetails);
         this.updateAdvertisement(newAdvertisementDto);
     }
-    private void deleteImageFiles(List<ImageDto> toDeletedImageModels){
-        toDeletedImageModels.forEach(image -> storageService.deleteByPath("images"+image.getPath()));
+
+    private void deleteImageFiles(List<ImageDto> toDeletedImageModels) {
+        toDeletedImageModels.forEach(image -> storageService.deleteByPath("images" + image.getPath()));
     }
+
     @Override
-    public AdvertisementDto getAdvertisementById(int id) throws UnknownAdvertisementException, UnknownUserException {
+    public Optional<AdvertisementDto> getAdvertisementById(int id) {
         Optional<AdvertisementEntity> advertisementEntity = advertisementRepository.findByIdWithCategoryAndType(id);
-        log.info("AdvertisementEntity entity by id: {},{}",id,advertisementEntity);
-
-        return convertAdvertisementEntityToModel(advertisementEntity.get());
+        log.info("AdvertisementEntity entity by id: {},{}", id, advertisementEntity);
+        if (advertisementEntity.isEmpty()) {
+            return Optional.empty();
+        }
+        return Optional.of(convertAdvertisementEntityToDto(advertisementEntity.get()));
     }
 
     @Override
-    public AdDetailsDto getAdDetailsById(int id) throws UnknownAdvertisementException {
+    public Optional<AdDetailsDto> getAdDetailsById(int id) {
         Optional<BasicAdDetailsEntity> basicAdDetailsEntity = basicAdDetailsRepository.findById(id);
         Optional<AdDetailsEntity> adDetailsEntity = adDetailsRepository.findById(id);
-        if(basicAdDetailsEntity.isPresent() && adDetailsEntity.isPresent()){
-            return AdDetailsDto.builder()
+        if (basicAdDetailsEntity.isPresent() && adDetailsEntity.isPresent()) {
+            return Optional.of(AdDetailsDto.builder()
                 .weight(adDetailsEntity.get().getWeight())
                 .maxSpeed(adDetailsEntity.get().getMaxSpeed())
                 .range(adDetailsEntity.get().getRange())
@@ -278,43 +293,49 @@ public class AdvertisementServiceImpl implements AdvertisementService {
                 .performance(basicAdDetailsEntity.get().getPerformance())
                 .seatNumber(basicAdDetailsEntity.get().getSeatNumber())
                 .year(basicAdDetailsEntity.get().getYear())
-                .build();
+                .build());
         }
-        throw new UnknownAdvertisementException(String.format("No advertisement found by id : %s",id));
-
+        return Optional.empty();
     }
 
     @Override
     public void updateAdDetails(AdDetailsDto adDetailsDto) throws UnknownAdvertisementException {
-        if(!advertisementRepository.existsByIdAndAndCreator_Username(adDetailsDto.getAdId(),SecurityContextHolder.getContext().getAuthentication().getName())){
+        if (!advertisementRepository.existsByIdAndAndCreator_Username(adDetailsDto.getAdId(),
+            SecurityContextHolder.getContext().getAuthentication().getName())) {
             throw new AuthException("Access denied");
         }
-        if(!adDetailsRepository.existsById(adDetailsDto.getAdId())){
-            throw new UnknownAdvertisementException(String.format("Advertisement not found by id: %s",adDetailsDto.getAdId()));
+        if (!adDetailsRepository.existsById(adDetailsDto.getAdId())) {
+            throw new UnknownAdvertisementException(
+                String.format("Advertisement not found by id: %s", adDetailsDto.getAdId()));
         }
         adDetailsRepository.save(convertAdDetailsToAdDetailsEntity(adDetailsDto));
         basicAdDetailsRepository.save(convertAdDetailsToBasicAdDetailsEntity(adDetailsDto));
-        log.info("Updated AdDetails: {}",adDetailsDto);
+        log.info("Updated AdDetails: {}", adDetailsDto);
     }
 
     @Override
-    public Slice<AdvertisementDto> getAdvertisements(AdvertisementQueryParams params, Pageable pageable) {
-        return null;
+    public Slice<AdLabelDto> getAdvertisements(AdvertisementQueryParams params, Pageable pageable) {
+        return advertisementRepository.findByParams(params, pageable)
+            .map(this::convertAdvertisementEntityToLabelDto);
     }
 
     @Override
-    public List<AdvertisementDto> getSavedAdvertisementsByUsername(String username) throws UnknownUserException {
-        return userRepository.findByUsername(username).get().getSavedAds().stream()
-            .map(e->AdvertisementDto.builder().id(e.getId()).title(e.getTitle()).build()).collect(Collectors.toList());
+    public List<AdvertisementDto> getSavedAdvertisementsByUsername(String username) {
+        Optional<UserEntity> userEntity = userRepository.findByUsername(username);
+        if (userEntity.isEmpty()) {
+            return new LinkedList<>();
+        }
+        return userEntity.get().getSavedAds().stream()
+            .map(e -> AdvertisementDto.builder().id(e.getId()).title(e.getTitle()).build())
+            .collect(Collectors.toList());
     }
 
     @Override
-    public Page<AdvertisementDto> getAdvertisementsByUsername(String username, Pageable pageable, AdState state)
-        throws UnknownUserException {
-        int userId  = userRepository.findByUsername(username).get().getId();
-        return advertisementRepository.findByCreator(userId,pageable,state)
-            .map(this::convertAdvertisementEntityToModel);
+    public Page<AdLabelDto> getAdvertisementsByUsername(String username, Pageable pageable, AdState state) {
+        return advertisementRepository.findByCreator(username, pageable, state)
+            .map(this::convertAdvertisementEntityToLabelDto);
     }
+
     @Override
     public List<String> getBrandNamesByCategory(String category) {
         return advertisementRepository.findBrandNamesByCategory(category);
@@ -322,12 +343,12 @@ public class AdvertisementServiceImpl implements AdvertisementService {
 
     @Override
     public List<String> getCarTypesByBrandName(String category, String brandName) {
-        return advertisementRepository.findCarTypesByCategoryAndBrand(category,brandName);
+        return advertisementRepository.findCarTypesByCategoryAndBrand(category, brandName);
     }
 
     @Override
     public List<String> getCategories() {
-        return StreamSupport.stream(categoryRepository.findAll().spliterator(),false)
+        return StreamSupport.stream(categoryRepository.findAll().spliterator(), false)
             .map(CategoryEntity::getName)
             .collect(Collectors.toList());
     }
@@ -344,6 +365,7 @@ public class AdvertisementServiceImpl implements AdvertisementService {
         advertisementEntity.setState(stateToChange);
         advertisementRepository.save(advertisementEntity);
     }
+
     private UserEntity queryUserEntity(String username) throws UnknownUserException {
         Optional<UserEntity> userEntity = userRepository.findByUsername(username);
         if (userEntity.isEmpty()) {
@@ -410,8 +432,9 @@ public class AdvertisementServiceImpl implements AdvertisementService {
             .year(adDetailsDto.getYear())
             .build();
     }
-    private AdvertisementDto convertAdvertisementEntityToModel(AdvertisementEntity advertisementEntity){
-        return AdvertisementDto.builder()
+
+    private AdLabelDto convertAdvertisementEntityToLabelDto(AdvertisementEntity advertisementEntity) {
+        return AdLabelDto.builder()
             .id(advertisementEntity.getId())
             .price(advertisementEntity.getPrice())
             .brand(advertisementEntity.getType().getBrandEntity().getBrandName())
@@ -420,15 +443,14 @@ public class AdvertisementServiceImpl implements AdvertisementService {
             .title(advertisementEntity.getTitle())
             .state(advertisementEntity.getState())
             .type(advertisementEntity.getType().getName())
-            .category(advertisementEntity.getCategory().getName())
-            .creator(advertisementEntity.getCreator().getUsername())
-            .images(advertisementEntity.getImages().stream()
-                .map(this::convertImageEntityToModel).collect(Collectors.toList()))
+            .imagePaths(advertisementEntity.getImages().stream()
+                .map(ImageEntity::getPath).collect(Collectors.toList()))
             .basicAdDetailsDto(convertBasicAdDetailsEntityToModel(advertisementEntity.getBasicAdDetails()))
             .build();
     }
-    public  AdDetailsDto convertBasicAdDetailsEntityToModel(BasicAdDetailsEntity basicAdDetailsEntity){
-        return AdDetailsDto.builder()
+
+    public BasicAdDetailsDto convertBasicAdDetailsEntityToModel(BasicAdDetailsEntity basicAdDetailsEntity) {
+        return BasicAdDetailsDto.builder()
             .adId(basicAdDetailsEntity.getAdId())
             .year(basicAdDetailsEntity.getYear())
             .batterySize(basicAdDetailsEntity.getBatterySize())
@@ -439,7 +461,23 @@ public class AdvertisementServiceImpl implements AdvertisementService {
             .drive(basicAdDetailsEntity.getDrive())
             .build();
     }
-    public  ImageDto convertImageEntityToModel(ImageEntity imageEntity){
+
+    public static AdvertisementDto convertAdvertisementEntityToDto(AdvertisementEntity advertisementEntity) {
+        return AdvertisementDto.builder()
+            .id(advertisementEntity.getId())
+            .price(advertisementEntity.getPrice())
+            .brand(advertisementEntity.getType().getBrandEntity().getBrandName())
+            .condition(advertisementEntity.getCondition())
+            .created(advertisementEntity.getCreated())
+            .title(advertisementEntity.getTitle())
+            .state(advertisementEntity.getState())
+            .type(advertisementEntity.getType().getName())
+            .images(advertisementEntity.getImages().stream()
+                .map(ImageEntity::getPath).collect(Collectors.toList()))
+            .build();
+    }
+
+    public ImageDto convertImageEntityToModel(ImageEntity imageEntity) {
         return ImageDto.builder()
             .id(imageEntity.getId())
             .path(imageEntity.getPath())
@@ -447,7 +485,7 @@ public class AdvertisementServiceImpl implements AdvertisementService {
             .build();
     }
 
-    public  AdDetailsDto convertAdDetailsEntityToModel(AdDetailsEntity adDetailsEntity){
+    public AdDetailsDto convertAdDetailsEntityToModel(AdDetailsEntity adDetailsEntity) {
         return AdDetailsDto.builder()
             .adId(adDetailsEntity.getAdId())
             .description(adDetailsEntity.getDescription())
@@ -458,7 +496,8 @@ public class AdvertisementServiceImpl implements AdvertisementService {
             .weight(adDetailsEntity.getWeight())
             .build();
     }
-    public static AdDetailsEntity convertAdDetailsToAdDetailsEntity(AdDetailsDto adDetails){
+
+    public static AdDetailsEntity convertAdDetailsToAdDetailsEntity(AdDetailsDto adDetails) {
         return AdDetailsEntity.builder()
             .adId(adDetails.getAdId())
             .maxSpeed(adDetails.getMaxSpeed())
@@ -469,7 +508,8 @@ public class AdvertisementServiceImpl implements AdvertisementService {
             .description(adDetails.getDescription())
             .build();
     }
-    public static BasicAdDetailsEntity convertAdDetailsToBasicAdDetailsEntity(AdDetailsDto adDetails){
+
+    public static BasicAdDetailsEntity convertAdDetailsToBasicAdDetailsEntity(AdDetailsDto adDetails) {
         return BasicAdDetailsEntity.builder()
             .adId(adDetails.getAdId())
             .performance(adDetails.getPerformance())
@@ -481,6 +521,7 @@ public class AdvertisementServiceImpl implements AdvertisementService {
             .year(adDetails.getYear())
             .build();
     }
+
     private AdvertisementEntity queryAdvertisementEntity(int id) throws UnknownAdvertisementException {
         Optional<AdvertisementEntity> advertisementEntity = advertisementRepository.findById(id);
         if (advertisementEntity.isEmpty()) {

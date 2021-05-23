@@ -6,7 +6,6 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.example.core.advertising.persistence.AdState;
 import org.example.core.advertising.persistence.ProductState;
-import org.example.core.image.model.ImageDto;
 
 import java.sql.Timestamp;
 import java.util.List;
@@ -31,15 +30,11 @@ public class AdvertisementDto {
 
         private final String title;
 
-        private final String description;
-
         private final int price;
 
         private final AdState state;
 
         private final Timestamp created;
 
-        private final List<ImageDto> images;
-
-        private final AdDetailsDto basicAdDetailsDto;
+        private final List<String> images;
 }

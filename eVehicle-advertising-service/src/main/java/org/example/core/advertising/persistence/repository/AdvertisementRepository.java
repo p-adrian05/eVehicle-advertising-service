@@ -39,11 +39,11 @@ public interface AdvertisementRepository extends CrudRepository<AdvertisementEnt
             "and (:#{#params.minChargeSpeed} is null or adDetails.chargeSpeed>=:#{#params.minChargeSpeed})" +
             "and (:#{#params.maxChargeSpeed} is null or adDetails.chargeSpeed<=:#{#params.maxChargeSpeed})"
     )
-    Slice<AdvertisementEntity> findByCategory(@Param("params") AdvertisementQueryParams params, Pageable pageable);
+    Slice<AdvertisementEntity> findByParams(@Param("params") AdvertisementQueryParams params, Pageable pageable);
 
     @Query(value = "SELECT ad FROM AdvertisementEntity ad  JOIN FETCH ad.type left join fetch ad.images where ad.creator.id =:userId and ad.state=:state",
-        countQuery = "SELECT count(ad) from AdvertisementEntity ad where ad.creator.id =:userId and ad.state=:state")
-    Page<AdvertisementEntity> findByCreator(@Param("userId") int userId, Pageable pageable, @Param("state")
+        countQuery = "SELECT count(ad) from AdvertisementEntity ad where ad.creator.username =:username and ad.state=:state")
+    Page<AdvertisementEntity> findByCreator(@Param("username") String username, Pageable pageable, @Param("state")
         AdState state);
 
     @Query("SELECT ad FROM AdvertisementEntity ad JOIN FETCH ad.images where ad.id=:id")

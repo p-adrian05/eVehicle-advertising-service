@@ -5,7 +5,7 @@ import com.google.gson.JsonElement;
 import org.example.controller.dto.advertisement.AdvertisementAllDataDto;
 import org.example.controller.dto.advertisement.AdvertisementBasicDetailsDto;
 import org.example.controller.dto.advertisement.AdvertisementDetailsDto;
-import org.example.controller.dto.advertisement.AdvertisementDto;
+
 import org.example.controller.dto.advertisement.CreateAdvertisementDto;
 import org.example.controller.dto.message.MessageDto;
 import org.example.controller.dto.rate.CreateUserRateDto;
@@ -17,6 +17,7 @@ import org.example.controller.dto.user.UserDataDto;
 import org.example.controller.dto.user.UserRegistrationDto;
 
 import org.example.core.advertising.model.AdDetailsDto;
+import org.example.core.advertising.model.AdvertisementDto;
 import org.example.core.user.model.UserDto;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.security.core.userdetails.User;

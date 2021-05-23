@@ -77,6 +77,11 @@ public class AdvertisementEntity {
     @EqualsAndHashCode.Exclude
     private BasicAdDetailsEntity basicAdDetails;
 
+    @OneToOne(fetch = FetchType.LAZY,mappedBy = "advertisement")
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private AdDetailsEntity adDetailsEntity;
+
     @Column
     private String title;
 
