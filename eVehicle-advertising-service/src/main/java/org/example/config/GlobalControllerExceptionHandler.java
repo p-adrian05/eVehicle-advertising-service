@@ -1,17 +1,24 @@
 package org.example.config;
 
 
-import org.apache.tomcat.util.http.fileupload.FileUploadException;
-import org.example.exceptions.*;
+import org.example.controller.ValidationException;
+import org.example.core.advertising.exception.UnknownAdvertisementException;
+import org.example.core.advertising.exception.UnknownCategoryException;
+import org.example.core.image.exception.UnknownImageException;
+import org.example.core.message.exception.UnknownMessageException;
+import org.example.core.rating.exception.UnknownUserRateException;
+import org.example.core.rating.exception.UserRateAlreadyExistsException;
+import org.example.core.role.exception.UnknownRoleException;
+import org.example.core.security.AuthException;
+import org.example.core.user.exception.EmailAlreadyExistsException;
+import org.example.core.user.exception.UnknownUserException;
+import org.example.core.user.exception.UsernameAlreadyExistsException;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
-
-import javax.naming.AuthenticationException;
 import javax.servlet.http.HttpServletRequest;
 
 import java.sql.Timestamp;
@@ -22,9 +29,9 @@ public class GlobalControllerExceptionHandler {
 
       @ResponseStatus(HttpStatus.NOT_FOUND)
       @ExceptionHandler(value = {UnknownUserException.class, UnknownRoleException.
-              class,UnknownAdvertisementException.class,
-      UnknownAdvertisementException.class,UnknownCategoryException.class,UnknownImageException.class,
-              UnknownUserRateException.class,UnknownMessageException.class})
+              class, UnknownAdvertisementException.class,
+      UnknownAdvertisementException.class, UnknownCategoryException.class, UnknownImageException.class,
+              UnknownUserRateException.class, UnknownMessageException.class})
       @ResponseBody
       public ErrorInfo handleNotFound(HttpServletRequest req, Exception ex) {
             return new ErrorInfo(new Timestamp(new Date().getTime()),HttpStatus.NOT_FOUND.value(),
@@ -47,13 +54,13 @@ public class GlobalControllerExceptionHandler {
             errorInfo.setErrors(ex.getErrors());
             return errorInfo;
       }
-      @ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
-      @ExceptionHandler(value = {DeleteMessageException.class,UpdateMessageException.class,
-              MaximumSavedAdsReachedException.class,CreateAdvertisementException.class,CreateMessageException.class})
-      @ResponseBody
-      public ErrorInfo handleDeleteUpdateMessageException(HttpServletRequest req, Exception ex) {
-            return new ErrorInfo(new Timestamp(new Date().getTime()),HttpStatus.UNPROCESSABLE_ENTITY.value(),
-                    HttpStatus.UNPROCESSABLE_ENTITY.name(), ex.getMessage(), req.getRequestURI());
-      }
+//      @ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
+//      @ExceptionHandler(value = {DeleteMessageException.class, UpdateMessageException.class,
+//              MaximumSavedAdsReachedException.class, CreateAdvertisementException.class,CreateMessageException.class})
+//      @ResponseBody
+//      public ErrorInfo handleDeleteUpdateMessageException(HttpServletRequest req, Exception ex) {
+//            return new ErrorInfo(new Timestamp(new Date().getTime()),HttpStatus.UNPROCESSABLE_ENTITY.value(),
+//                    HttpStatus.UNPROCESSABLE_ENTITY.name(), ex.getMessage(), req.getRequestURI());
+//      }
 
 }

@@ -2,7 +2,11 @@ package org.example.controller.util;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
-import org.example.controller.dto.advertisement.*;
+import org.example.controller.dto.advertisement.AdvertisementAllDataDto;
+import org.example.controller.dto.advertisement.AdvertisementBasicDetailsDto;
+import org.example.controller.dto.advertisement.AdvertisementDetailsDto;
+import org.example.controller.dto.advertisement.AdvertisementDto;
+import org.example.controller.dto.advertisement.CreateAdvertisementDto;
 import org.example.controller.dto.message.MessageDto;
 import org.example.controller.dto.rate.CreateUserRateDto;
 import org.example.controller.dto.rate.RateAdvertisementDto;
@@ -11,10 +15,14 @@ import org.example.controller.dto.rate.UserRateDto;
 import org.example.controller.dto.user.UserBasicDto;
 import org.example.controller.dto.user.UserDataDto;
 import org.example.controller.dto.user.UserRegistrationDto;
-import org.example.model.*;
+
+import org.example.core.advertising.model.AdDetailsDto;
+import org.example.core.user.model.UserDto;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.validation.ObjectError;
 
+import java.awt.Image;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -23,7 +31,7 @@ public class ModelDtoConverter {
 
 
 
-    public static UserBasicDto convertUserToUserBasicDto(User user){
+    public static UserBasicDto convertUserToUserBasicDto(UserDto user){
         return UserBasicDto.builder()
                 .username(user.getUsername())
                 .created(user.getCreated())
@@ -32,7 +40,7 @@ public class ModelDtoConverter {
                 .lastLogin(user.getLastLogin())
                 .build();
     }
-    public static UserDataDto convertUserDataToUserDataDto(UserData userData){
+    public static UserDataDto convertUserDataToUserDataDto(UserDataDto userData){
         return UserDataDto.builder()
                 .username(userData.getUsername())
                 .city(userData.getCity())
@@ -41,8 +49,8 @@ public class ModelDtoConverter {
                 .phoneNumber(userData.getPhoneNumber())
                 .build();
     }
-    public static UserData convertUserDataDtoToUserData(UserDataDto userDataDto){
-         return  UserData.builder()
+    public static UserDataDto convertUserDataDtoToUserData(UserDataDto userDataDto){
+         return  UserDataDto.builder()
                     .username(userDataDto.getUsername())
                     .city(userDataDto.getCity())
                     .fullName(userDataDto.getFullName())
@@ -50,13 +58,13 @@ public class ModelDtoConverter {
                     .phoneNumber(userDataDto.getPhoneNumber())
                     .build();
     }
-    public static User convertUserRegistrationDtoToUser(UserRegistrationDto userRegistrationDto){
-        return User.builder()
-                .username(userRegistrationDto.getUsername())
-                .email(userRegistrationDto.getEmail())
-                .password(userRegistrationDto.getPassword())
-                .build();
-    }
+//    public static UserRegistrationDto convertUserRegistrationDtoToUser(UserRegistrationDto userRegistrationDto){
+//        return UserRegistrationDto.builder()
+//                .username(userRegistrationDto.getUsername())
+//                .email(userRegistrationDto.getEmail())
+//                .password(userRegistrationDto.getPassword())
+//                .build();
+//    }
 
     public static List<String> convertBindingErrorsToString(List<ObjectError> errors){
         return errors.stream()
@@ -64,7 +72,7 @@ public class ModelDtoConverter {
                 .collect(Collectors.toList());
     }
 
-    public static UserRateDto convertUserRateModelToDto(UserRate userRate){
+    public static UserRateDto convertUserRateModelToDto(UserRateDto userRate){
         return UserRateDto.builder()
                 .advertisement(RateAdvertisementDto.builder()
                                     .id(userRate.getAdvertisement().getId())
@@ -81,7 +89,7 @@ public class ModelDtoConverter {
                 .ratingUserProfileImageId(userRate.getRatingUserProfileImageId())
                 .build();
     }
-    public static UserRateBasicDto convertUserRateModelToBasicDto(UserRate userRate){
+    public static UserRateBasicDto convertUserRateModelToBasicDto(UserRateDto userRate){
         return UserRateBasicDto.builder()
                 .advertisement(RateAdvertisementDto.builder()
                         .id(userRate.getAdvertisement().getId())
@@ -94,31 +102,29 @@ public class ModelDtoConverter {
                 .ratedUsername(userRate.getRatedUsername())
                 .ratingUsername(userRate.getRatingUsername())
                 .ratingUserProfileImageId(userRate.getRatingUserProfileImageId())
-                .activationCode(userRate.getActivationCode())
-                .status(userRate.getStatus())
                 .build();
     }
-    public static UserRate convertCreateUserRateDtoToModel(CreateUserRateDto createUserRateDto){
-        return UserRate.builder()
+    public static UserRateDto convertCreateUserRateDtoToModel(CreateUserRateDto createUserRateDto){
+        return UserRateDto.builder()
                 .rateState(createUserRateDto.getRateState())
-                .advertisement(Advertisement.builder().id(createUserRateDto.getAdId()).build())
+                .advertisement(RateAdvertisementDto.builder().id(createUserRateDto.getAdId()).build())
                 .description(createUserRateDto.getDescription())
                 .ratedUsername(createUserRateDto.getRatedUsername())
                 .ratingUsername(createUserRateDto.getRatingUsername())
                 .build();
     }
 
-    public static MessageDto convertMessageDtoFromModel(Message message){
+    public static MessageDto convertMessageDtoFromModel(MessageDto message){
         return MessageDto.builder()
                 .content(message.getContent())
                 .id(message.getId())
-                .receiverUsername(message.getReceiverUsernames().stream().findFirst().orElse("no_data"))
+                .receiverUsername(message.getReceiverUsername())
                 .senderUserName(message.getSenderUserName())
                 .unread(message.isUnread())
                 .sentTime(message.getSentTime())
                 .build();
     }
-    public static AdvertisementDto convertAdvertisementModelToDto(Advertisement advertisement){
+    public static AdvertisementDto convertAdvertisementModelToDto(AdvertisementDto advertisement){
         return AdvertisementDto.builder()
                 .id(advertisement.getId())
                 .brand(advertisement.getBrand())
@@ -144,8 +150,8 @@ public class ModelDtoConverter {
                 .drive(adDetails.getDrive())
                 .build();
     }
-    public static Advertisement createNewAdvertisementFromDto(CreateAdvertisementDto createAdvertisementDto){
-        return Advertisement.builder()
+    public static AdvertisementDto createNewAdvertisementFromDto(CreateAdvertisementDto createAdvertisementDto){
+        return AdvertisementDto.builder()
                 .creator(createAdvertisementDto.getCreator())
                 .category(createAdvertisementDto.getCategory())
                 .brand(createAdvertisementDto.getBrand())
@@ -157,7 +163,7 @@ public class ModelDtoConverter {
                 .type(createAdvertisementDto.getType())
                 .build();
     }
-    public static AdvertisementAllDataDto convertAdvertisementModelToAllDto(Advertisement advertisement){
+    public static AdvertisementAllDataDto convertAdvertisementModelToAllDto(AdvertisementDto advertisement){
         return AdvertisementAllDataDto.builder()
                 .id(advertisement.getId())
                 .brand(advertisement.getBrand())
@@ -184,7 +190,7 @@ public class ModelDtoConverter {
 //                .category(advertisementDto.getCategory())
 //                .build();
 //    }
-    public static AdvertisementDetailsDto convertAdDetailsToDto(AdDetails adDetails){
+    public static AdvertisementDetailsDto convertAdDetailsToDto(AdDetailsDto adDetails){
         return AdvertisementDetailsDto.builder()
                 .accelaration(adDetails.getAccelaration())
                 .year(adDetails.getYear())
@@ -201,8 +207,8 @@ public class ModelDtoConverter {
                 .weight(adDetails.getWeight())
                 .build();
     }
-    public static AdDetails convertAdvertisementDetailsDtoToModel(AdvertisementDetailsDto advertisementDetailsDto){
-        return AdDetails.builder()
+    public static AdDetailsDto convertAdvertisementDetailsDtoToModel(AdvertisementDetailsDto advertisementDetailsDto){
+        return AdDetailsDto.builder()
                 .accelaration(advertisementDetailsDto.getAccelaration())
                 .year(advertisementDetailsDto.getYear())
                 .batterySize(advertisementDetailsDto.getBatterySize())

@@ -5,22 +5,43 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.tomcat.util.http.fileupload.FileUploadException;
 import org.example.config.AttributeNames;
 import org.example.config.Mappings;
-import org.example.controller.dto.advertisement.*;
-import org.example.controller.util.ModelDtoConverter;
-import org.example.exceptions.*;
-import org.example.model.AdDetails;
-import org.example.model.Advertisement;
+import org.example.controller.dto.advertisement.AdvertisementAllDataDto;
+import org.example.controller.dto.advertisement.AdvertisementDetailsDto;
+import org.example.controller.dto.advertisement.AdvertisementDto;
+import org.example.controller.dto.advertisement.CreateAdvertisementDto;
 import org.example.controller.dto.advertisement.SavedAdDto;
-import org.example.repository.util.AdState;
-import org.example.repository.util.AdvertisementQueryParams;
-import org.example.services.AdvertisementService;
-import org.example.services.StorageService;
-import org.springframework.data.domain.*;
+import org.example.controller.dto.advertisement.UpdateAdvertisementDto;
+import org.example.controller.util.ModelDtoConverter;
+
+import org.example.core.advertising.AdvertisementService;
+import org.example.core.advertising.exception.UnknownAdvertisementException;
+import org.example.core.advertising.exception.UnknownCategoryException;
+import org.example.core.advertising.persistence.AdState;
+import org.example.core.advertising.persistence.repository.AdvertisementQueryParams;
+import org.example.core.image.StorageService;
+import org.example.core.user.exception.UnknownUserException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
@@ -28,7 +49,9 @@ import org.springframework.web.server.ResponseStatusException;
 import javax.validation.Valid;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -48,7 +71,8 @@ public class AdvertisementController {
                                                      @RequestParam(name = AttributeNames.SORT_PARAM, required = false,defaultValue = AttributeNames.ADVERTISEMENTS_DEFAULT_SORT_PARAM) String sortParam,
                                                      @RequestParam(required = false) Map<String,String> searchParams){
 
-        AdvertisementQueryParams adQueryParams = ModelDtoConverter.convertSearchParamsToObject(searchParams,AdvertisementQueryParams.class);
+        AdvertisementQueryParams
+            adQueryParams = ModelDtoConverter.convertSearchParamsToObject(searchParams,AdvertisementQueryParams.class);
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortOrder),
                 advertisementService.convertSortParamToValidForm(sortParam)));
         return advertisementService.getAdvertisements(adQueryParams,pageable)
@@ -103,7 +127,8 @@ public class AdvertisementController {
     @PutMapping(Mappings.ADVERTISEMENT+"/{id}")
     @CrossOrigin
     public void updateAdvertisement(@Valid @ModelAttribute UpdateAdvertisementDto updateAdvertisementDto, @PathVariable int id,
-                                    @RequestParam MultipartFile[] images ,BindingResult bindingResult) throws UnknownAdvertisementException, ValidationException, UnknownCategoryException, UnknownUserException, FileUploadException {
+                                    @RequestParam MultipartFile[] images ,BindingResult bindingResult) throws UnknownAdvertisementException, ValidationException,
+        UnknownCategoryException, UnknownUserException, FileUploadException {
         if(bindingResult.hasErrors()){
             List<String> errors = ModelDtoConverter.convertBindingErrorsToString(bindingResult.getAllErrors());
             throw new ValidationException("Validation failed for updated advertisement",errors);

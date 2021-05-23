@@ -2,13 +2,11 @@ package org.example.controller.dto.advertisement;
 
 
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
-
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-import org.example.repository.util.Drive;
-import org.example.repository.util.ProductState;
+import org.example.core.advertising.persistence.Drive;
+
 
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;

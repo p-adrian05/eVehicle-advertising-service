@@ -1,15 +1,17 @@
 package org.example.controller.dto.advertisement;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
-import org.example.repository.util.AdState;
-import org.example.repository.util.ProductState;
-import org.springframework.web.multipart.MultipartFile;
+import org.example.core.advertising.persistence.AdState;
+import org.example.core.advertising.persistence.ProductState;
+
 
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
-import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
 @Data

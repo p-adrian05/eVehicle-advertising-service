@@ -1,6 +1,6 @@
 package org.example.controller.dto.user;
 
-import lombok.*;
+import lombok.Getter;
 
 @Getter
 public class UpdateUserRolesDto extends UserRolesDto {

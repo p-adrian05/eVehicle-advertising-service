@@ -2,11 +2,10 @@ package org.example.controller.dto.rate;
 
 import lombok.Builder;
 import lombok.Data;
-import org.example.repository.util.RateState;
-import org.example.repository.util.UserRateState;
+import org.example.core.rating.persistence.entity.RateState;
+
 
 import javax.validation.constraints.Min;
-import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 
 @Data

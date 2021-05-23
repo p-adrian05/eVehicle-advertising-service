@@ -1,8 +1,6 @@
 package org.example.config;
 
 
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
-
 public class AttributeNames {
 
     private AttributeNames(){}

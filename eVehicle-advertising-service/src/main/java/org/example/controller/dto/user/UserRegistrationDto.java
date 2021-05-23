@@ -1,6 +1,8 @@
 package org.example.controller.dto.user;
 
-import lombok.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.example.controller.validation.FieldsVerification;
 
 import javax.validation.constraints.Email;

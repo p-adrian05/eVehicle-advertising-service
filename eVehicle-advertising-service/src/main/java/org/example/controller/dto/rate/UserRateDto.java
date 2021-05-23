@@ -2,9 +2,8 @@ package org.example.controller.dto.rate;
 
 import lombok.Builder;
 import lombok.Data;
-import org.example.repository.util.RateState;
-import org.example.repository.util.RateStatus;
-import org.example.repository.util.UserRateState;
+import org.example.core.rating.persistence.entity.RateState;
+import org.example.core.rating.persistence.entity.UserRateState;
 
 import java.sql.Timestamp;
 

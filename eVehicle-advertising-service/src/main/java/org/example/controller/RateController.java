@@ -4,22 +4,38 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.config.AttributeNames;
 import org.example.config.Mappings;
-import org.example.controller.dto.rate.*;
+import org.example.controller.dto.rate.CreateUserRateAsSellerDto;
+import org.example.controller.dto.rate.CreateUserRateDto;
+import org.example.controller.dto.rate.UpdateRateDto;
+import org.example.controller.dto.rate.UserRateBasicDto;
+import org.example.controller.dto.rate.UserRateDto;
 import org.example.controller.util.ModelDtoConverter;
-import org.example.exceptions.*;
-import org.example.model.UserRate;
-import org.example.repository.util.RateQueryParams;
-import org.example.repository.util.RateState;
-import org.example.repository.util.RateStatus;
-import org.example.repository.util.UserRateState;
-import org.example.services.UserRateService;
+import org.example.core.advertising.exception.UnknownAdvertisementException;
+import org.example.core.rating.UserRateService;
+import org.example.core.rating.exception.UnknownUserRateException;
+import org.example.core.rating.exception.UserRateAlreadyExistsException;
+import org.example.core.rating.persistence.entity.RateState;
+import org.example.core.rating.persistence.entity.RateStatus;
+import org.example.core.rating.persistence.entity.UserRateState;
+import org.example.core.rating.persistence.repository.RateQueryParams;
+import org.example.core.user.exception.UnknownUserException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.Valid;
 import java.util.List;
@@ -67,7 +83,8 @@ public class RateController {
     @ResponseStatus(HttpStatus.CREATED)
     @CrossOrigin
     public void createRateAsBuyer(@Valid @RequestBody CreateUserRateDto createUserRateDto, BindingResult bindingResult)
-            throws UnknownAdvertisementException, UnknownUserException, UserRateAlreadyExistsException, ValidationException, UnknownUserRateException {
+            throws UnknownAdvertisementException, UnknownUserException, UserRateAlreadyExistsException, ValidationException,
+        UnknownUserRateException {
         if(!SecurityContextHolder.getContext().getAuthentication().getName().equals(createUserRateDto.getRatingUsername())){
             throw new AuthException("Access Denied");
         }
