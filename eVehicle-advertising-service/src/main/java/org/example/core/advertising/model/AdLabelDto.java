@@ -34,5 +34,5 @@ public class AdLabelDto {
 
     private final List<String> imagePaths;
 
-    private final BasicAdDetailsDto basicAdDetailsDto;
+    private final BasicAdDetails basicAdDetails;
 }

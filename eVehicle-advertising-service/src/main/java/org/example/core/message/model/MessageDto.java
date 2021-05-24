@@ -23,7 +23,7 @@ public class MessageDto {
 
     private final String senderUserName;
 
-    private final List<String> receiverUsernames;
+    private final String receiverUsername;
 
     private final Timestamp sentTime;
 }

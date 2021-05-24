@@ -42,19 +42,13 @@ public class MessageServiceImpl implements MessageService {
     public void createMessage(MessageDto messageDto) throws UnknownUserException {
         UserEntity senderUser = queryUserEntity(messageDto.getSenderUserName());
         log.info("Creating nem message, sender user: {}",senderUser);
-        List<UserEntity> receiverUserEntities = new LinkedList<>();
-        UserEntity receiverUser;
-        for(String receiverUsername : messageDto.getReceiverUsernames()){
-            receiverUser = queryUserEntity(receiverUsername);
-            receiverUserEntities.add(receiverUser);
-        }
-        log.info("Creating nem message, receiver users: {}",receiverUserEntities);
+        UserEntity receiverUserEntity =  queryUserEntity(messageDto.getReceiverUsername());
+        log.info("Creating nem message, receiver user: {}",receiverUserEntity);
         MessageEntity messageEntity = MessageEntity.builder()
             .content(messageDto.getContent())
             .build();
         MessageEntity newMessageEntity = messageRepository.save(messageEntity);
         log.info("New message: {}",messageEntity);
-        for(UserEntity receiverUserEntity : receiverUserEntities){
             UserMessageEntity userMessageEntity = UserMessageEntity.builder()
                 .message(newMessageEntity)
                 .id(new UserMessageId())
@@ -65,13 +59,12 @@ public class MessageServiceImpl implements MessageService {
                 .build();
             userMessageRepository.save(userMessageEntity);
             log.info("Created new user-message connection: {}",userMessageEntity);
-        }
     }
 
     @Override
     public void deleteMessage(MessageDto messageDto) throws DeleteMessageException, UnknownMessageException, UnknownUserException {
         int senderUserId = queryUserEntity(messageDto.getSenderUserName()).getId();
-        int receiverUserId = queryUserEntity(messageDto.getReceiverUsernames().get(0)).getId();
+        int receiverUserId = queryUserEntity(messageDto.getReceiverUsername()).getId();
 
         log.info("Deleting message, sender user id: {}",senderUserId);
         log.info("Deleting message, receiver user id: {}",receiverUserId);
@@ -92,7 +85,7 @@ public class MessageServiceImpl implements MessageService {
     public void updateMessage(MessageDto messageDto) throws UnknownUserException, UnknownMessageException,
         UpdateMessageException {
         int senderUserId = queryUserEntity(messageDto.getSenderUserName()).getId();
-        int receiverUserId = queryUserEntity(messageDto.getReceiverUsernames().get(0)).getId();
+        int receiverUserId = queryUserEntity(messageDto.getReceiverUsername()).getId();
         UserMessageId userMessageId = new UserMessageId(messageDto.getId(),senderUserId,receiverUserId);
         UserMessageEntity userMessageEntity =queryUserMessage(userMessageId);
         userMessageEntity.setUnread(messageDto.isUnread());
@@ -132,7 +125,7 @@ public class MessageServiceImpl implements MessageService {
                     .content(messageEntity.getMessage().getContent())
                     .sentTime(messageEntity.getSentTime())
                     .senderUserName(messageEntity.getSenderUser().getUsername())
-                    .receiverUsernames(List.of(messageEntity.getReceiverUser().getUsername()))
+                    .receiverUsername(messageEntity.getReceiverUser().getUsername())
                     .unread(messageEntity.isUnread()).build();
             });
     }

@@ -104,7 +104,7 @@ public class MessageController {
         }
         messageService.createMessage(MessageDto.builder()
             .content(createMessageDto.getContent())
-            .receiverUsernames(List.of(createMessageDto.getReceiverUsername()))
+            .receiverUsername(createMessageDto.getReceiverUsername())
             .senderUserName(createMessageDto.getSenderUserName())
             .build());
     }
@@ -124,7 +124,7 @@ public class MessageController {
             .id(updateMessageDto.getId())
             .unread(updateMessageDto.isUnread())
             .senderUserName(updateMessageDto.getSenderUsername())
-            .receiverUsernames(List.of(updateMessageDto.getReceiverUsername()))
+            .receiverUsername(updateMessageDto.getReceiverUsername())
             .build());
     }
 
@@ -140,7 +140,7 @@ public class MessageController {
         messageService.deleteMessage(MessageDto.builder()
             .id(deleteMessageDto.getId())
             .senderUserName(deleteMessageDto.getSenderUserName())
-            .receiverUsernames(List.of(deleteMessageDto.getReceiverUsername())).build());
+            .receiverUsername(deleteMessageDto.getReceiverUsername()).build());
     }
 
 }

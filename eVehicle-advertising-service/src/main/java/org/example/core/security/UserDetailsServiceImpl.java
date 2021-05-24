@@ -1,6 +1,7 @@
 package org.example.core.security;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.example.core.role.persistence.entity.RoleEntity;
 import org.example.core.user.model.AuthUserDto;
 import org.example.core.user.persistence.entity.UserEntity;
@@ -15,6 +16,7 @@ import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Service
+@Slf4j
 public class UserDetailsServiceImpl implements UserDetailsService {
 
     private final UserRepository userRepository;
@@ -35,6 +37,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
             .roles(userEntity.getRoles().stream().map(RoleEntity::getRoleName).collect(Collectors.toList()))
             .password(userEntity.getPassword())
             .username(userEntity.getUsername())
+            .enabled(userEntity.isEnabled())
             .build();
     }
 }

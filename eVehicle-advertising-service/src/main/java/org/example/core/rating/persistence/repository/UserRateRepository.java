@@ -33,6 +33,6 @@ public interface UserRateRepository extends CrudRepository<UserRateEntity,Intege
 
     int countByRatedUser_UsernameAndRate_State(String username, RateState rateState);
 
-    @Query(value = "SELECT r FROM UserRateEntity r join fetch r.ratedUser join fetch r.ratingUser join fetch r.rate where r.activationCode =:code  and r.status='OPEN'")
+    @Query(value = "SELECT r FROM UserRateEntity r join fetch r.ratedUser join fetch r.ratingUser join fetch r.rate where r.activationCode=:code  and r.status='OPEN'")
     Optional<UserRateEntity> findUserRateEntityByActivationCode(@Param("code") String code);
 }

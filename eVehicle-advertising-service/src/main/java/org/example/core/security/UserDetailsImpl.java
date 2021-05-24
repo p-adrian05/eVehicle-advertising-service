@@ -2,7 +2,6 @@ package org.example.core.security;
 
 
 import org.example.core.user.model.AuthUserDto;
-import org.example.core.user.model.UserDto;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;

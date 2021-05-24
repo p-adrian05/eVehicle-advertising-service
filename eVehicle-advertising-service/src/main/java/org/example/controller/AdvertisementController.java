@@ -154,7 +154,7 @@ public class AdvertisementController {
             .title(updateAdvertisementDto.getTitle())
             .type(updateAdvertisementDto.getType())
             .build();
-        AdDetailsDto adDetails = ModelDtoConverter.convertAdvertisementDetailsDtoToModel(advertisementDetailsDto);
+        AdDetailsDto adDetails = ModelDtoConverter.convertAdvertisementDetailsDtoToModel(advertisementDetailsDto,id);
         advertisementService.updateAdvertisementWithDetails(advertisement, adDetails, images);
     }
 
@@ -174,7 +174,7 @@ public class AdvertisementController {
             throw new ValidationException("Validation failed for creating advertisement", errors);
         }
         CreateAdDto advertisement = ModelDtoConverter.createNewAdvertisementFromDto(createAdvertisementDto);
-        AdDetailsDto adDetailsDto = ModelDtoConverter.convertAdvertisementDetailsDtoToModel(advertisementDetailsDto);
+        AdDetailsDto adDetailsDto = ModelDtoConverter.convertAdvertisementDetailsDtoToModel(advertisementDetailsDto,0);
         advertisementService.createAdvertisement(advertisement, adDetailsDto, images);
     }
 

@@ -16,6 +16,7 @@ public class CreateMessageDto {
     @NotNull(message = "senderUserName: cannot be null")
     @NotEmpty(message = "senderUserName: cannot be empty")
     private String senderUserName;
-
+    @NotNull(message = "senderUserName: cannot be null")
+    @NotEmpty(message = "senderUserName: cannot be empty")
     private String receiverUsername;
 }

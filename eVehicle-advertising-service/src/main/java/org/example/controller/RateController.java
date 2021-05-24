@@ -91,6 +91,8 @@ public class RateController {
             .ratedUsername(userRate.getRatedUsername())
             .ratingUsername(userRate.getRatingUsername())
             .ratingUserProfileImageId(userRate.getRatingUserProfileImageId())
+                    .status(userRate.getStatus())
+                    .activationCode(userRate.getActivationCode())
             .build());
     }
 
@@ -98,8 +100,7 @@ public class RateController {
     @ResponseStatus(HttpStatus.CREATED)
     @CrossOrigin
     public void createRateAsBuyer(@Valid @RequestBody CreateUserRateDto createUserRateDto, BindingResult bindingResult)
-            throws UnknownAdvertisementException, UnknownUserException, UserRateAlreadyExistsException, ValidationException,
-        UnknownUserRateException {
+        throws UnknownAdvertisementException, UnknownUserException, ValidationException, UserRateAlreadyExistsException {
         if(!SecurityContextHolder.getContext().getAuthentication().getName().equals(createUserRateDto.getRatingUsername())){
             throw new AuthException("Access Denied");
         }
@@ -115,13 +116,14 @@ public class RateController {
             .ratingUsername(createUserRateDto.getRatingUsername())
             .ratedState(UserRateState.SELLER)
             .build();
-        userRateService.createUserRate(userRate);
+        userRateService.createSellerRate(userRate);
     }
     @PostMapping(Mappings.RATE+"/seller")
     @ResponseStatus(HttpStatus.CREATED)
     @CrossOrigin
     public void createRateAsSeller(@Valid @RequestBody CreateUserRateAsSellerDto createUserRateAsSellerDto, BindingResult bindingResult)
-            throws UnknownAdvertisementException, UnknownUserException, UserRateAlreadyExistsException, ValidationException, UnknownUserRateException {
+        throws UnknownAdvertisementException, UnknownUserException, ValidationException,
+        UnknownUserRateException {
         if(!SecurityContextHolder.getContext().getAuthentication().getName().equals(createUserRateAsSellerDto.getRatingUsername())){
             throw new AuthException("Access Denied");
         }
@@ -136,8 +138,9 @@ public class RateController {
             .ratedUsername(createUserRateAsSellerDto.getRatedUsername())
             .ratingUsername(createUserRateAsSellerDto.getRatingUsername())
             .ratedState(UserRateState.BUYER)
+            .activationCode(createUserRateAsSellerDto.getActivationCode())
             .build();
-        userRateService.createUserRate(userRate);
+        userRateService.createBuyerRate(userRate);
     }
     @PatchMapping(Mappings.RATE)
     @ResponseStatus(HttpStatus.NO_CONTENT)

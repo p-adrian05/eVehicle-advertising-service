@@ -36,5 +36,5 @@ public class AdvertisementDto {
 
         private final Timestamp created;
 
-        private final List<String> images;
+        private final List<String> imagePaths;
 }

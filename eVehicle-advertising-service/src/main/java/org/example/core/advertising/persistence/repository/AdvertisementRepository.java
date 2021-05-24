@@ -14,7 +14,7 @@ import java.util.Optional;
 
 public interface AdvertisementRepository extends CrudRepository<AdvertisementEntity, Integer> {
 
-    @Query("SELECT ad FROM AdvertisementEntity ad JOIN FETCH ad.category left JOIN FETCH ad.images JOIN FETCH ad.type where ad.id=:id")
+    @Query("SELECT ad FROM AdvertisementEntity ad left JOIN FETCH ad.category left JOIN FETCH ad.images left JOIN FETCH ad.type left join fetch ad.creator where ad.id=:id")
     Optional<AdvertisementEntity> findByIdWithCategoryAndType(@Param("id") int id);
 
     @Query(
@@ -41,8 +41,8 @@ public interface AdvertisementRepository extends CrudRepository<AdvertisementEnt
     )
     Slice<AdvertisementEntity> findByParams(@Param("params") AdvertisementQueryParams params, Pageable pageable);
 
-    @Query(value = "SELECT ad FROM AdvertisementEntity ad  JOIN FETCH ad.type left join fetch ad.images where ad.creator.id =:userId and ad.state=:state",
-        countQuery = "SELECT count(ad) from AdvertisementEntity ad where ad.creator.username =:username and ad.state=:state")
+    @Query(value = "SELECT ad FROM AdvertisementEntity ad  JOIN FETCH ad.type left join fetch ad.images left join fetch ad.basicAdDetails where ad.creator.username=:username and ad.state=:state",
+        countQuery = "SELECT count(ad) from AdvertisementEntity ad where ad.creator.username=:username and ad.state=:state")
     Page<AdvertisementEntity> findByCreator(@Param("username") String username, Pageable pageable, @Param("state")
         AdState state);
 

@@ -13,6 +13,7 @@ import java.util.Optional;
 
 public interface UserRepository extends CrudRepository<UserEntity,Integer> {
 
+    @Query("SELECT u from UserEntity u left join fetch u.roles where u.username =:username")
     Optional<UserEntity> findByUsername(String username);
 
     @Query("SELECT u from UserEntity u left join fetch u.profileImage left join fetch u.roles where u.username =:username")

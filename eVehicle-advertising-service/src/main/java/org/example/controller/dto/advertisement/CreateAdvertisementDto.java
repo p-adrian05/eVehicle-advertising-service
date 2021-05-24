@@ -1,6 +1,7 @@
 package org.example.controller.dto.advertisement;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -16,6 +17,7 @@ import javax.validation.constraints.NotNull;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 public class CreateAdvertisementDto{
 
     @NotNull(message = "creator: cannot be null")

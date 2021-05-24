@@ -28,6 +28,7 @@ import javax.transaction.Transactional;
 import java.sql.Timestamp;
 import java.util.Date;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 @RequiredArgsConstructor
@@ -141,18 +142,17 @@ public class UserServiceImpl implements UserService {
         throws UnknownRoleException {
        String hashedPassword = passwordEncoder.encode(createUserDto.getPassword());
        String activationCode = UUID.randomUUID() + createUserDto.getUsername();
-       UserEntity userEntity =  UserEntity.builder()
-            .username(createUserDto.getUsername())
-            .password(hashedPassword)
-            .created(new Timestamp(new Date().getTime()))
-            .activation(activationCode)
-            .email(createUserDto.getEmail())
-            .enabled(false)
-            .lastLogin(null)
-            .profileImage(queryDefaultProfileImageEntity())
-            .build();
-        userEntity.addRole(queryRoleByRoleName(DEFAULT_ROLE));
-        return userEntity;
+        return UserEntity.builder()
+             .username(createUserDto.getUsername())
+             .password(hashedPassword)
+             .created(new Timestamp(new Date().getTime()))
+             .activation(activationCode)
+             .email(createUserDto.getEmail())
+             .enabled(false)
+             .lastLogin(null)
+             .profileImage(queryDefaultProfileImageEntity())
+            .roles(Set.of(queryRoleByRoleName(DEFAULT_ROLE)))
+             .build();
     }
     private Optional<UserDto> convertUserEntityToDto(Optional<UserEntity> userEntity) {
         return userEntity.map(this::convertUserEntityToUserDto);

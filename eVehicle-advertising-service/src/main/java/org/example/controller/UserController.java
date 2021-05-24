@@ -5,22 +5,24 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.config.Mappings;
 import org.example.controller.dto.user.AuthenticationRequestDto;
 import org.example.controller.dto.user.AuthenticationResponseDto;
+import org.example.controller.dto.user.UpdateUserDataDto;
 import org.example.controller.dto.user.UpdateUserRolesDto;
 import org.example.controller.dto.user.UserBasicDto;
-import org.example.controller.dto.user.UserDataDto;
-import org.example.controller.dto.user.UserMarkedAdDto;
 import org.example.controller.dto.user.UserRegistrationDto;
-import org.example.controller.dto.user.UserRolesDto;
 import org.example.controller.dto.user.UsernameUpdateDto;
 import org.example.controller.util.ModelDtoConverter;
-
-import org.example.core.advertising.exception.UnknownAdvertisementException;
+import org.example.core.role.RoleService;
+import org.example.core.role.exception.RoleModificationException;
 import org.example.core.role.exception.UnknownRoleException;
 import org.example.core.security.AuthException;
+import org.example.core.user.LoginService;
 import org.example.core.user.UserService;
 import org.example.core.user.exception.EmailAlreadyExistsException;
 import org.example.core.user.exception.UnknownUserException;
 import org.example.core.user.exception.UsernameAlreadyExistsException;
+import org.example.core.user.model.CreateUserDto;
+import org.example.core.user.model.UserDataDto;
+import org.example.core.user.model.UserDto;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.BindingResult;
@@ -40,6 +42,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import javax.validation.Valid;
 import java.util.List;
+import java.util.Optional;
 
 
 @RestController
@@ -49,95 +52,109 @@ import java.util.List;
 public class UserController {
 
     private final UserService userService;
+    private final RoleService roleService;
+    private final LoginService loginService;
 
 
     @GetMapping(Mappings.USER+"/{username}")
     @CrossOrigin
-    public UserBasicDto getUserBasicDataByUsername(@PathVariable String username) throws UnknownUserException {
-        return ModelDtoConverter.convertUserToUserBasicDto(userService.getUserByName(username));
+    public UserBasicDto getUserBasicDataByUsername(@PathVariable String username) {
+        Optional<UserDto> userDto = userService.getUserByName(username);
+        if(userDto.isPresent()){
+            return ModelDtoConverter.convertUserToUserBasicDto(userDto.get());
+        }
+        throw new ResponseStatusException(HttpStatus.NOT_FOUND,"User not found");
     }
     @GetMapping(Mappings.USER+"/{username}/"+Mappings.DETAILS)
     @CrossOrigin
     public UserDataDto getUserData(@PathVariable String username) throws UnknownUserException {
-        return ModelDtoConverter.convertUserDataToUserDataDto(userService.getUserData(username));
+        Optional<UserDataDto> userDataDto = userService.getUserData(username);
+        if(userDataDto.isPresent()){
+            return userDataDto.get();
+        }
+        throw new ResponseStatusException(HttpStatus.NOT_FOUND,"User not found");
     }
     @PutMapping(Mappings.USER_DETAILS)
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void updateUserData(@Valid @RequestBody UserDataDto userDataDto, BindingResult bindingResult)
-            throws UnknownUserException, org.example.exceptions.ValidationException {
-        if(!SecurityContextHolder.getContext().getAuthentication().getName().equals(userDataDto.getUsername())){
+    public void updateUserData(@Valid @RequestBody UpdateUserDataDto updateUserDataDto, BindingResult bindingResult)
+            throws UnknownUserException, ValidationException {
+        if(!SecurityContextHolder.getContext().getAuthentication().getName().equals(updateUserDataDto.getUsername())){
             throw new AuthException("Access Denied");
         }
         if(bindingResult.hasErrors()){
             List<String> errors = ModelDtoConverter.convertBindingErrorsToString(bindingResult.getAllErrors());
-            throw new org.example.exceptions.ValidationException("Validation failed for UserDataDto",errors);
+            throw new ValidationException("Validation failed for UserDataDto",errors);
         }
-        userService.updateUserData(ModelDtoConverter.convertUserDataDtoToUserData(userDataDto));
+        userService.updateUserData(ModelDtoConverter.convertUserDataDtoToUserData(updateUserDataDto));
     }
     @PostMapping(Mappings.USER)
     @ResponseStatus(HttpStatus.CREATED)
     @CrossOrigin
     public void createUser(@Valid @RequestBody UserRegistrationDto userRegistrationDto, BindingResult bindingResult)
             throws UnknownRoleException, EmailAlreadyExistsException, UsernameAlreadyExistsException,
-        org.example.exceptions.ValidationException {
+       ValidationException {
         if(bindingResult.hasErrors()){
             List<String> errors = ModelDtoConverter.convertBindingErrorsToString(bindingResult.getAllErrors());
-            throw new org.example.exceptions.ValidationException("Validation failed UserRegistrationDto",errors);
+            throw new ValidationException("Validation failed UserRegistrationDto",errors);
         }
-        userService.createUser(ModelDtoConverter.convertUserRegistrationDtoToUser(userRegistrationDto));
+        userService.createUser(CreateUserDto.builder()
+            .username(userRegistrationDto.getUsername())
+            .email(userRegistrationDto.getEmail())
+            .password(userRegistrationDto.getPassword())
+            .build());
     }
-    @GetMapping(Mappings.USER+"/{username}/"+Mappings.ROLES)
-    public UserRolesDto getRoles(@PathVariable String username) throws UnknownUserException {
-        return UserRolesDto.builder().roles(userService.getRoles(username)).username(username).build();
-    }
+//    @GetMapping(Mappings.USER+"/{username}/"+Mappings.ROLES)
+//    public String getRoles(@PathVariable String username) throws UnknownUserException {
+//        return roleService.readRoles(username);
+//    }
     @PatchMapping(Mappings.USER_ROLES)
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void modifyRoles(@Valid @RequestBody UpdateUserRolesDto updateUserRolesDto,BindingResult bindingResult)
-            throws org.example.exceptions.ValidationException, UnknownRoleException, UnknownUserException {
+    public void modifyRole(@Valid @RequestBody UpdateUserRolesDto updateUserRolesDto,BindingResult bindingResult)
+        throws ValidationException, UnknownUserException, RoleModificationException {
         if(bindingResult.hasErrors()){
             List<String> errors = ModelDtoConverter.convertBindingErrorsToString(bindingResult.getAllErrors());
-            throw new org.example.exceptions.ValidationException("Validation failed userRolesDto",errors);
+            throw new ValidationException("Validation failed userRolesDto",errors);
         }
         if(updateUserRolesDto.getOperation().equals("add")){
-            userService.addRole(updateUserRolesDto.getUsername(),updateUserRolesDto.getRoles());
+            roleService.addRole(updateUserRolesDto.getUsername(),updateUserRolesDto.getRole());
         }else if(updateUserRolesDto.getOperation().equals("delete")){
-            userService.removeRole(updateUserRolesDto.getUsername(),updateUserRolesDto.getRoles());
+            roleService.removeRole(updateUserRolesDto.getUsername(),updateUserRolesDto.getRole());
         }else {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     String.format("unknown operation: %s",updateUserRolesDto.getOperation()));
         }
     }
-    @PatchMapping(Mappings.USER_SAVED_AD)
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void modifyMarkedAd(@Valid @RequestBody UserMarkedAdDto userMarkedAdDto, BindingResult bindingResult)
-            throws UnknownUserException, UnknownAdvertisementException, org.example.exceptions.ValidationException, MaximumSavedAdsReachedException {
-        if(!SecurityContextHolder.getContext().getAuthentication().getName().equals(userMarkedAdDto.getUsername())){
-            throw new AuthException("Access Denied");
-        }
-        if(bindingResult.hasErrors()){
-            List<String> errors = ModelDtoConverter.convertBindingErrorsToString(bindingResult.getAllErrors());
-            throw new org.example.exceptions.ValidationException("Validation failed userMarkedAdDto",errors);
-        }
-        if(userMarkedAdDto.getOperation().equals("add")){
-            userService.addSaveAd(userMarkedAdDto.getUsername(),userMarkedAdDto.getAdId());
-        }else if(userMarkedAdDto.getOperation().equals("delete")){
-            userService.removeSaveAd(userMarkedAdDto.getUsername(),userMarkedAdDto.getAdId());
-        }else {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    String.format("unknown operation: %s",userMarkedAdDto.getOperation()));
-        }
-    }
+//    @PatchMapping(Mappings.USER_SAVED_AD)
+//    @ResponseStatus(HttpStatus.NO_CONTENT)
+//    public void modifyMarkedAd(@Valid @RequestBody UserMarkedAdDto userMarkedAdDto, BindingResult bindingResult)
+//            throws UnknownUserException, UnknownAdvertisementException, ValidationException {
+//        if(!SecurityContextHolder.getContext().getAuthentication().getName().equals(userMarkedAdDto.getUsername())){
+//            throw new AuthException("Access Denied");
+//        }
+//        if(bindingResult.hasErrors()){
+//            List<String> errors = ModelDtoConverter.convertBindingErrorsToString(bindingResult.getAllErrors());
+//            throw new ValidationException("Validation failed userMarkedAdDto",errors);
+//        }
+//        if(userMarkedAdDto.getOperation().equals("add")){
+//            userService.addSaveAd(userMarkedAdDto.getUsername(),userMarkedAdDto.getAdId());
+//        }else if(userMarkedAdDto.getOperation().equals("delete")){
+//            userService.removeSaveAd(userMarkedAdDto.getUsername(),userMarkedAdDto.getAdId());
+//        }else {
+//            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+//                    String.format("unknown operation: %s",userMarkedAdDto.getOperation()));
+//        }
+//    }
     @PatchMapping(Mappings.USER+"/{username}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void updateUsername(@PathVariable("username") String oldUsername,
                                @Valid @RequestBody UsernameUpdateDto usernameUpdateDto, BindingResult bindingResult)
-            throws org.example.exceptions.ValidationException, UnknownUserException, UsernameAlreadyExistsException {
+            throws ValidationException, UnknownUserException, UsernameAlreadyExistsException {
         if(!SecurityContextHolder.getContext().getAuthentication().getName().equals(oldUsername)){
             throw new AuthException("Access Denied");
         }
         if(bindingResult.hasErrors()){
             List<String> errors = ModelDtoConverter.convertBindingErrorsToString(bindingResult.getAllErrors());
-            throw new org.example.exceptions.ValidationException("Validation failed usernameUpdateDto",errors);
+            throw new ValidationException("Validation failed usernameUpdateDto",errors);
         }
         userService.updateUsername(oldUsername,usernameUpdateDto.getNewUsername());
     }
@@ -150,18 +167,18 @@ public class UserController {
     @PostMapping("/authenticate")
     @CrossOrigin
     public AuthenticationResponseDto authenticate(@RequestBody AuthenticationRequestDto authenticationRequestDto)
-            throws AuthException {
+        throws AuthException, javax.security.auth.message.AuthException {
 
         return new AuthenticationResponseDto(
-                userService.login(authenticationRequestDto.getUsername(),authenticationRequestDto.getPassword()));
+                loginService.login(authenticationRequestDto.getUsername(),authenticationRequestDto.getPassword()));
     }
 
     @GetMapping("/authenticate/activate/{code}")
     @ResponseStatus(HttpStatus.ACCEPTED)
     @ResponseBody
     public String registrationActivation(@PathVariable String code)
-            throws AuthException {
-        userService.activateUser(code);
+        throws AuthException, javax.security.auth.message.AuthException {
+        loginService.activateUser(code);
         return "Successful activation";
     }
 

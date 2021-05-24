@@ -47,9 +47,8 @@ public class UserRateServiceImpl implements UserRateService {
 
     @Override
     @Transactional
-    public void createUserRate(UserRateDto userRate)
-        throws UnknownUserException, UnknownAdvertisementException, UserRateAlreadyExistsException,
-        UnknownUserRateException {
+    public void createSellerRate(UserRateDto userRate)
+        throws UnknownUserException, UnknownAdvertisementException, UserRateAlreadyExistsException{
 
         UserEntity ratingUserEntity = queryUserEntity(userRate.getRatingUsername());
         UserEntity ratedUserEntity = queryUserEntity(userRate.getRatedUsername());
@@ -76,8 +75,42 @@ public class UserRateServiceImpl implements UserRateService {
             }
             activationCode = UUID.randomUUID().toString();
 
+            RateEntity newRateEntity = rateRepository.save(RateEntity.builder()
+                .created(new Timestamp(new Date().getTime()))
+                .description(userRate.getDescription())
+                .state(userRate.getRateState())
+                .build());
+            log.info("Created Rate: {}", newRateEntity);
+            UserRateEntity newUserRateEntity = UserRateEntity.builder()
+                .rate(newRateEntity)
+                .ratedUser(ratedUserEntity)
+                .ratingUser(ratingUserEntity)
+                .advertisement(advertisementEntity.get())
+                .state(userRate.getRatedState())
+                .activationCode(activationCode)
+                .status(rateStatus)
+                .build();
+            log.info("Created User Rate: {}", newUserRateEntity);
+            userRateRepository.save(newUserRateEntity);
+        }
 
-        } else if (userRate.getRatedState().equals(UserRateState.BUYER)) {
+    }
+    @Override
+    @Transactional
+    public void createBuyerRate(UserRateDto userRate)
+        throws UnknownUserException, UnknownAdvertisementException,
+        UnknownUserRateException {
+
+        UserEntity ratingUserEntity = queryUserEntity(userRate.getRatingUsername());
+        UserEntity ratedUserEntity = queryUserEntity(userRate.getRatedUsername());
+        Optional<AdvertisementEntity>
+            advertisementEntity = advertisementRepository.findById(userRate.getAdvertisement().getId());
+        if (advertisementEntity.isEmpty()) {
+            throw new UnknownAdvertisementException("Advertisement not found");
+        }
+        RateStatus rateStatus = RateStatus.OPEN;
+        if (userRate.getRatedState().equals(UserRateState.BUYER)) {
+
             if (advertisementEntity.get().getCreator().getId() != ratingUserEntity.getId()) {
                 throw new UnknownUserException(
                     String.format("Unknown user found for Advertisement: username : %s, ad id: %s",
@@ -85,24 +118,20 @@ public class UserRateServiceImpl implements UserRateService {
             }
             Optional<UserRateEntity> userRateToActivate =
                 userRateRepository.findUserRateEntityByActivationCode(userRate.getActivationCode());
+            System.out.println(userRate.getActivationCode());
             if (userRateToActivate.isEmpty()) {
                 throw new UnknownUserRateException(String
                     .format("As a buyer rate, it has no starter rate opened by as buyer: %s",
                         userRate.getRatedUsername()));
             }
-
             if (userRateToActivate.get().getRatedUser().getUsername().equals(userRate.getRatingUsername())
                 && userRateToActivate.get().getRatingUser().getUsername().equals(userRate.getRatedUsername())) {
                 rateStatus = RateStatus.CLOSED;
                 activateUserRate(userRateToActivate.get());
 
             } else {
-                throw new UnknownUserRateException(String
-                    .format("As a buyer rate, it has no starter rate opened by as buyer: %s",
-                        userRate.getRatedUsername()));
+                throw new UnknownUserRateException(String.format("Invalid rating creation attempt"));
             }
-
-
         }
 
         RateEntity newRateEntity = rateRepository.save(RateEntity.builder()
@@ -117,13 +146,14 @@ public class UserRateServiceImpl implements UserRateService {
             .ratingUser(ratingUserEntity)
             .advertisement(advertisementEntity.get())
             .state(userRate.getRatedState())
-            .activationCode(activationCode)
+            .activationCode(null)
             .status(rateStatus)
             .build();
         log.info("Created User Rate: {}", newUserRateEntity);
         userRateRepository.save(newUserRateEntity);
 
     }
+
 
     private void activateUserRate(UserRateEntity userRate) {
         userRate.setStatus(RateStatus.CLOSED);
