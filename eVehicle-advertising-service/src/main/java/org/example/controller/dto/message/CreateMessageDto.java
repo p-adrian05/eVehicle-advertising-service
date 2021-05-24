@@ -5,7 +5,6 @@ import lombok.Data;
 
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
-import java.util.List;
 
 @Data
 @Builder
@@ -18,5 +17,5 @@ public class CreateMessageDto {
     @NotEmpty(message = "senderUserName: cannot be empty")
     private String senderUserName;
 
-    private List<String> receiverUsername;
+    private String receiverUsername;
 }

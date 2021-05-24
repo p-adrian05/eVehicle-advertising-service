@@ -6,19 +6,17 @@ import org.example.config.AttributeNames;
 import org.example.config.Mappings;
 import org.example.controller.dto.message.CreateMessageDto;
 import org.example.controller.dto.message.DeleteMessageDto;
-import org.example.controller.dto.message.MessageDto;
-import org.example.controller.dto.message.PartnerNamesDto;
 import org.example.controller.dto.message.UpdateMessageDto;
 import org.example.controller.util.ModelDtoConverter;
-
 import org.example.core.message.MessageService;
 import org.example.core.message.exception.DeleteMessageException;
 import org.example.core.message.exception.UnknownMessageException;
 import org.example.core.message.exception.UpdateMessageException;
+import org.example.core.message.model.MessageDto;
+import org.example.core.message.model.MessagePartnerDto;
 import org.example.core.security.AuthException;
 import org.example.core.user.exception.UnknownUserException;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -35,10 +33,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 import javax.validation.Valid;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
@@ -50,7 +48,7 @@ public class MessageController {
 
     @GetMapping(Mappings.MESSAGES_PARTNERS)
     @CrossOrigin
-    public Page<PartnerNamesDto> getMessagePartners(@RequestParam("username") String username,
+    public Page<MessagePartnerDto> getMessagePartners(@RequestParam("username") String username,
                                                     @RequestParam(name = AttributeNames.PAGE_NUMBER, required = false, defaultValue = "0")
                                                         Integer page,
                                                     @RequestParam(name = AttributeNames.PAGE_SIZE, required = false, defaultValue = AttributeNames.MESSAGE_PARTNERS_PAGE_SIZE)
@@ -59,12 +57,7 @@ public class MessageController {
             throw new AuthException("Access Denied");
         }
         Pageable pageable = PageRequest.of(page, size);
-        Page<MessagePartner> messagePartners = messageService.getConversationUsernames(username, pageable);
-        List<PartnerNamesDto> partnerNamesDtos = messagePartners.stream().map(partner -> PartnerNamesDto.builder()
-            .isThereNewMessage(partner.isThereNewMessage())
-            .partnerUsername(partner.getPartnerUsername())
-            .lastSentTime(partner.getSentTime()).build()).collect(Collectors.toList());
-        return new PageImpl<>(partnerNamesDtos, pageable, messagePartners.getTotalPages());
+        return messageService.getConversationUsernames(username, pageable);
     }
 
     @GetMapping(Mappings.MESSAGES)
@@ -82,8 +75,7 @@ public class MessageController {
         }
         Pageable pageable = PageRequest
             .of(page, size, Sort.by(Sort.Direction.fromString(sortOrder), AttributeNames.MESSAGE_TIME_ATTRIBUTE));
-        return messageService.getMessagesByUsernames(username, partnerUsername, pageable)
-            .map(ModelDtoConverter::convertMessageDtoFromModel);
+        return messageService.getMessagesByUsernames(username, partnerUsername, pageable);
     }
 
     @GetMapping(Mappings.MESSAGES_NEW_COUNT)
@@ -98,21 +90,21 @@ public class MessageController {
     @ResponseStatus(HttpStatus.CREATED)
     @CrossOrigin
     public void createMessage(@Valid @RequestBody CreateMessageDto createMessageDto, BindingResult bindingResult)
-        throws ValidationException, UnknownUserException, CreateMessageException {
+        throws ValidationException, UnknownUserException {
         if (!SecurityContextHolder.getContext().getAuthentication().getName()
             .equals(createMessageDto.getSenderUserName())) {
             throw new AuthException("Access Denied");
         }
         if (createMessageDto.getSenderUserName().equals(createMessageDto.getReceiverUsername())) {
-            throw new CreateMessageException("Sender and receiver user can not be the same");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Sender and receiver user can not be the same");
         }
         if (bindingResult.hasErrors()) {
             List<String> errors = ModelDtoConverter.convertBindingErrorsToString(bindingResult.getAllErrors());
             throw new ValidationException("Validation failed for creating user message", errors);
         }
-        messageService.createMessage(Message.builder()
+        messageService.createMessage(MessageDto.builder()
             .content(createMessageDto.getContent())
-            .receiverUsernames(createMessageDto.getReceiverUsername())
+            .receiverUsernames(List.of(createMessageDto.getReceiverUsername()))
             .senderUserName(createMessageDto.getSenderUserName())
             .build());
     }
@@ -127,7 +119,7 @@ public class MessageController {
             List<String> errors = ModelDtoConverter.convertBindingErrorsToString(bindingResult.getAllErrors());
             throw new ValidationException("Validation failed for updating user message", errors);
         }
-        messageService.updateMessage(Message.builder()
+        messageService.updateMessage(MessageDto.builder()
             .content(updateMessageDto.getContent())
             .id(updateMessageDto.getId())
             .unread(updateMessageDto.isUnread())
@@ -145,7 +137,7 @@ public class MessageController {
             List<String> errors = ModelDtoConverter.convertBindingErrorsToString(bindingResult.getAllErrors());
             throw new ValidationException("Validation failed for deleting user message", errors);
         }
-        messageService.deleteMessage(Message.builder()
+        messageService.deleteMessage(MessageDto.builder()
             .id(deleteMessageDto.getId())
             .senderUserName(deleteMessageDto.getSenderUserName())
             .receiverUsernames(List.of(deleteMessageDto.getReceiverUsername())).build());
