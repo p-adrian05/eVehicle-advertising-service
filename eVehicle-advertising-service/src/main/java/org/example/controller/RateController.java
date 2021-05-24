@@ -6,18 +6,22 @@ import org.example.config.AttributeNames;
 import org.example.config.Mappings;
 import org.example.controller.dto.rate.CreateUserRateAsSellerDto;
 import org.example.controller.dto.rate.CreateUserRateDto;
+import org.example.controller.dto.rate.RateAdvertisementDto;
 import org.example.controller.dto.rate.UpdateRateDto;
 import org.example.controller.dto.rate.UserRateBasicDto;
-import org.example.controller.dto.rate.UserRateDto;
+
 import org.example.controller.util.ModelDtoConverter;
 import org.example.core.advertising.exception.UnknownAdvertisementException;
+import org.example.core.advertising.model.AdvertisementDto;
 import org.example.core.rating.UserRateService;
 import org.example.core.rating.exception.UnknownUserRateException;
 import org.example.core.rating.exception.UserRateAlreadyExistsException;
+import org.example.core.rating.model.UserRateDto;
 import org.example.core.rating.persistence.entity.RateState;
 import org.example.core.rating.persistence.entity.RateStatus;
 import org.example.core.rating.persistence.entity.UserRateState;
 import org.example.core.rating.persistence.repository.RateQueryParams;
+import org.example.core.security.AuthException;
 import org.example.core.user.exception.UnknownUserException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -61,8 +65,7 @@ public class RateController {
         RateQueryParams rateQueryParams = ModelDtoConverter.convertSearchParamsToObject(searchParams,RateQueryParams.class);
         Pageable pageable = PageRequest.of(page, size);
         rateQueryParams.setRateStatus(RateStatus.CLOSED);
-        return userRateService.getRates(rateQueryParams,pageable)
-                .map(ModelDtoConverter::convertUserRateModelToDto);
+        return userRateService.getRates(rateQueryParams,pageable);
     }
     @GetMapping(Mappings.RATES+"/{username}")
     @CrossOrigin
@@ -76,7 +79,19 @@ public class RateController {
         RateQueryParams rateQueryParams = ModelDtoConverter.convertSearchParamsToObject(searchParams,RateQueryParams.class);
         rateQueryParams.setRatedUsername(username);
         return userRateService.getRates(rateQueryParams,pageable)
-                .map(ModelDtoConverter::convertUserRateModelToBasicDto);
+                .map(userRate ->  UserRateBasicDto.builder()
+            .advertisement(RateAdvertisementDto.builder()
+                .id(userRate.getAdvertisement().getId())
+                .price(userRate.getAdvertisement().getPrice())
+                .title(userRate.getAdvertisement().getTitle())
+                .build())
+            .created(userRate.getCreated())
+            .id(userRate.getId())
+            .ratedState(userRate.getRatedState())
+            .ratedUsername(userRate.getRatedUsername())
+            .ratingUsername(userRate.getRatingUsername())
+            .ratingUserProfileImageId(userRate.getRatingUserProfileImageId())
+            .build());
     }
 
     @PostMapping(Mappings.RATE+"/buyer")
@@ -92,8 +107,14 @@ public class RateController {
             List<String> errors = ModelDtoConverter.convertBindingErrorsToString(bindingResult.getAllErrors());
             throw new ValidationException("Validation failed for creating rate as buyer",errors);
         }
-        UserRate userRate = ModelDtoConverter.convertCreateUserRateDtoToModel(createUserRateDto);
-        userRate.setRatedState(UserRateState.SELLER);
+        UserRateDto userRate = UserRateDto.builder()
+            .rateState(createUserRateDto.getRateState())
+            .advertisement(AdvertisementDto.builder().id(createUserRateDto.getAdId()).build())
+            .description(createUserRateDto.getDescription())
+            .ratedUsername(createUserRateDto.getRatedUsername())
+            .ratingUsername(createUserRateDto.getRatingUsername())
+            .ratedState(UserRateState.SELLER)
+            .build();
         userRateService.createUserRate(userRate);
     }
     @PostMapping(Mappings.RATE+"/seller")
@@ -108,9 +129,14 @@ public class RateController {
             List<String> errors = ModelDtoConverter.convertBindingErrorsToString(bindingResult.getAllErrors());
             throw new ValidationException("Validation failed for creating rate as seller",errors);
         }
-        UserRate userRate = ModelDtoConverter.convertCreateUserRateDtoToModel(createUserRateAsSellerDto);
-        userRate.setRatedState(UserRateState.BUYER);
-        userRate.setActivationCode(createUserRateAsSellerDto.getActivationCode());
+        UserRateDto userRate = UserRateDto.builder()
+            .rateState(createUserRateAsSellerDto.getRateState())
+            .advertisement(AdvertisementDto.builder().id(createUserRateAsSellerDto.getAdId()).build())
+            .description(createUserRateAsSellerDto.getDescription())
+            .ratedUsername(createUserRateAsSellerDto.getRatedUsername())
+            .ratingUsername(createUserRateAsSellerDto.getRatingUsername())
+            .ratedState(UserRateState.BUYER)
+            .build();
         userRateService.createUserRate(userRate);
     }
     @PatchMapping(Mappings.RATE)
@@ -121,7 +147,7 @@ public class RateController {
             List<String> errors = ModelDtoConverter.convertBindingErrorsToString(bindingResult.getAllErrors());
             throw new ValidationException("Validation failed for updating user rate",errors);
         }
-        userRateService.updateUserRate(UserRate.builder()
+        userRateService.updateUserRate(UserRateDto.builder()
         .id(updateRateDto.getRateId())
         .rateState(updateRateDto.getRateState())
         .description(updateRateDto.getDescription()).build());

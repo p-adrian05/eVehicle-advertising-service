@@ -7,7 +7,6 @@ import org.example.controller.dto.advertisement.AdvertisementBasicDetailsDto;
 import org.example.controller.dto.advertisement.AdvertisementDetailsDto;
 
 import org.example.controller.dto.advertisement.CreateAdvertisementDto;
-import org.example.controller.dto.message.MessageDto;
 import org.example.controller.dto.rate.CreateUserRateDto;
 import org.example.controller.dto.rate.RateAdvertisementDto;
 import org.example.controller.dto.rate.UserRateBasicDto;
@@ -21,6 +20,7 @@ import org.example.core.advertising.model.AdvertisementDto;
 import org.example.core.advertising.model.CreateAdDto;
 import org.example.core.advertising.model.UpdateAdvertisementDto;
 import org.example.core.message.exception.UpdateMessageException;
+import org.example.core.message.model.MessageDto;
 import org.example.core.user.model.UserDto;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.security.core.userdetails.User;
