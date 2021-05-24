@@ -13,12 +13,10 @@ import javax.validation.constraints.Min;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 
-@EqualsAndHashCode(callSuper = true)
 @Data
-@SuperBuilder
 @AllArgsConstructor
 @NoArgsConstructor
-public class CreateAdvertisementDto extends AdvertisementDetailsDto{
+public class CreateAdvertisementDto{
 
     @NotNull(message = "creator: cannot be null")
     @NotEmpty(message = "creator: cannot be empty")
@@ -40,6 +38,4 @@ public class CreateAdvertisementDto extends AdvertisementDetailsDto{
     @NotNull(message = "price: cannot be null")
     @Min(0)
     private int price;
-
-    private AdState adState = AdState.ACTIVE;
 }

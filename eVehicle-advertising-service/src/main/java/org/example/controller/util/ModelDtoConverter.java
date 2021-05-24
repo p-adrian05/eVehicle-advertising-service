@@ -18,6 +18,9 @@ import org.example.controller.dto.user.UserRegistrationDto;
 
 import org.example.core.advertising.model.AdDetailsDto;
 import org.example.core.advertising.model.AdvertisementDto;
+import org.example.core.advertising.model.CreateAdDto;
+import org.example.core.advertising.model.UpdateAdvertisementDto;
+import org.example.core.message.exception.UpdateMessageException;
 import org.example.core.user.model.UserDto;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.security.core.userdetails.User;
@@ -125,44 +128,27 @@ public class ModelDtoConverter {
                 .sentTime(message.getSentTime())
                 .build();
     }
-    public static AdvertisementDto convertAdvertisementModelToDto(AdvertisementDto advertisement){
-        return AdvertisementDto.builder()
-                .id(advertisement.getId())
-                .brand(advertisement.getBrand())
-                .created(advertisement.getCreated())
-                .price(advertisement.getPrice())
-                .state(advertisement.getState())
-                .condition(advertisement.getCondition())
-                .basicAdDetails(convertAdDetailsModelToBasicDetailsDto(advertisement.getBasicAdDetails()))
-                .title(advertisement.getTitle())
-                .type(advertisement.getType())
-                .imagePaths(advertisement.getImages().stream().map(Image::getPath).collect(Collectors.toList()))
-                .build();
-    }
 
-    public static AdvertisementBasicDetailsDto convertAdDetailsModelToBasicDetailsDto(AdDetails adDetails){
-        return AdvertisementBasicDetailsDto.builder()
-                .year(adDetails.getYear())
-                .batterySize(adDetails.getBatterySize())
-                .chargeSpeed(adDetails.getChargeSpeed())
-                .performance(adDetails.getPerformance())
-                .seatNumber(adDetails.getSeatNumber())
-                .km(adDetails.getKm())
-                .drive(adDetails.getDrive())
-                .build();
-    }
-    public static AdvertisementDto createNewAdvertisementFromDto(CreateAdvertisementDto createAdvertisementDto){
-        return AdvertisementDto.builder()
+    public static CreateAdDto createNewAdvertisementFromDto(CreateAdvertisementDto createAdvertisementDto){
+        return CreateAdDto.builder()
                 .creator(createAdvertisementDto.getCreator())
                 .category(createAdvertisementDto.getCategory())
                 .brand(createAdvertisementDto.getBrand())
-                .description(createAdvertisementDto.getDescription())
                 .condition(createAdvertisementDto.getCondition())
                 .price(createAdvertisementDto.getPrice())
-                .state(createAdvertisementDto.getAdState())
                 .title(createAdvertisementDto.getTitle())
                 .type(createAdvertisementDto.getType())
                 .build();
+    }
+    public static UpdateAdvertisementDto createUpdateAdvertisementFromDto(CreateAdvertisementDto createAdvertisementDto){
+        return UpdateAdvertisementDto.builder()
+            .category(createAdvertisementDto.getCategory())
+            .brand(createAdvertisementDto.getBrand())
+            .condition(createAdvertisementDto.getCondition())
+            .price(createAdvertisementDto.getPrice())
+            .title(createAdvertisementDto.getTitle())
+            .type(createAdvertisementDto.getType())
+            .build();
     }
     public static AdvertisementAllDataDto convertAdvertisementModelToAllDto(AdvertisementDto advertisement){
         return AdvertisementAllDataDto.builder()
