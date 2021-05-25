@@ -2,10 +2,13 @@ package org.example.config;
 
 
 import org.example.controller.ValidationException;
+import org.example.core.advertising.exception.CreateAdvertisementException;
 import org.example.core.advertising.exception.UnknownAdvertisementException;
 import org.example.core.advertising.exception.UnknownCategoryException;
 import org.example.core.image.exception.UnknownImageException;
+import org.example.core.message.exception.DeleteMessageException;
 import org.example.core.message.exception.UnknownMessageException;
+import org.example.core.message.exception.UpdateMessageException;
 import org.example.core.rating.exception.UnknownUserRateException;
 import org.example.core.rating.exception.UserRateAlreadyExistsException;
 import org.example.core.role.exception.UnknownRoleException;
@@ -54,13 +57,12 @@ public class GlobalControllerExceptionHandler {
             errorInfo.setErrors(ex.getErrors());
             return errorInfo;
       }
-//      @ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
-//      @ExceptionHandler(value = {DeleteMessageException.class, UpdateMessageException.class,
-//              MaximumSavedAdsReachedException.class, CreateAdvertisementException.class,CreateMessageException.class})
-//      @ResponseBody
-//      public ErrorInfo handleDeleteUpdateMessageException(HttpServletRequest req, Exception ex) {
-//            return new ErrorInfo(new Timestamp(new Date().getTime()),HttpStatus.UNPROCESSABLE_ENTITY.value(),
-//                    HttpStatus.UNPROCESSABLE_ENTITY.name(), ex.getMessage(), req.getRequestURI());
-//      }
+      @ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
+      @ExceptionHandler(value = {DeleteMessageException.class, UpdateMessageException.class, CreateAdvertisementException.class})
+      @ResponseBody
+      public ErrorInfo handleDeleteUpdateMessageException(HttpServletRequest req, Exception ex) {
+            return new ErrorInfo(new Timestamp(new Date().getTime()),HttpStatus.UNPROCESSABLE_ENTITY.value(),
+                    HttpStatus.UNPROCESSABLE_ENTITY.name(), ex.getMessage(), req.getRequestURI());
+      }
 
 }

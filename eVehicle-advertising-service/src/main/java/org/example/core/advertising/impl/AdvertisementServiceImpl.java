@@ -105,7 +105,7 @@ public class AdvertisementServiceImpl implements AdvertisementService {
             .category(categoryEntity)
             .type(typeEntity)
             .title(advertisementDto.getTitle())
-            .condition(advertisementDto.getCondition())
+            .productCondition(advertisementDto.getCondition())
             .state(AdState.ACTIVE)
             .created(new Timestamp(new Date().getTime()))
             .images(new HashSet<>(
@@ -180,7 +180,7 @@ public class AdvertisementServiceImpl implements AdvertisementService {
         log.info("Type entity for updated advertisement: {}", typeEntity);
         advertisementEntity.setCategory(categoryEntity);
         advertisementEntity.setType(typeEntity);
-        advertisementEntity.setCondition(advertisementDto.getCondition());
+        advertisementEntity.setProductCondition(advertisementDto.getCondition());
         advertisementEntity.setTitle(advertisementDto.getTitle());
         advertisementEntity.setPrice(advertisementDto.getPrice());
         if (advertisementDto.getImagePaths() != null) {
@@ -278,7 +278,7 @@ public class AdvertisementServiceImpl implements AdvertisementService {
             return Optional.of(AdDetailsDto.builder()
                 .weight(adDetailsEntity.get().getWeight())
                 .maxSpeed(adDetailsEntity.get().getMaxSpeed())
-                .range(adDetailsEntity.get().getRange())
+                .range(adDetailsEntity.get().getProductRange())
                 .accelaration(adDetailsEntity.get().getAccelaration())
                 .color(adDetailsEntity.get().getColor())
                 .description(adDetailsEntity.get().getDescription())
@@ -403,7 +403,7 @@ public class AdvertisementServiceImpl implements AdvertisementService {
         return AdDetailsEntity.builder()
             .adId(adDetailsDto.getAdId())
             .maxSpeed(adDetailsDto.getMaxSpeed())
-            .range(adDetailsDto.getRange())
+            .productRange(adDetailsDto.getRange())
             .weight(adDetailsDto.getWeight())
             .accelaration(adDetailsDto.getAccelaration())
             .color(adDetailsDto.getColor())
@@ -429,7 +429,7 @@ public class AdvertisementServiceImpl implements AdvertisementService {
             .id(advertisementEntity.getId())
             .price(advertisementEntity.getPrice())
             .brand(advertisementEntity.getType().getBrandEntity().getBrandName())
-            .condition(advertisementEntity.getCondition())
+            .condition(advertisementEntity.getProductCondition())
             .created(advertisementEntity.getCreated())
             .title(advertisementEntity.getTitle())
             .state(advertisementEntity.getState())
@@ -460,7 +460,7 @@ public class AdvertisementServiceImpl implements AdvertisementService {
             .creator(advertisementEntity.getCreator().getUsername())
             .category(advertisementEntity.getCategory().getName())
             .brand(advertisementEntity.getType().getBrandEntity().getBrandName())
-            .condition(advertisementEntity.getCondition())
+            .condition(advertisementEntity.getProductCondition())
             .created(advertisementEntity.getCreated())
             .title(advertisementEntity.getTitle())
             .state(advertisementEntity.getState())
@@ -484,7 +484,7 @@ public class AdvertisementServiceImpl implements AdvertisementService {
             .description(adDetailsEntity.getDescription())
             .color(adDetailsEntity.getColor())
             .accelaration(adDetailsEntity.getAccelaration())
-            .range(adDetailsEntity.getRange())
+            .range(adDetailsEntity.getProductRange())
             .maxSpeed(adDetailsEntity.getMaxSpeed())
             .weight(adDetailsEntity.getWeight())
             .build();
@@ -494,7 +494,7 @@ public class AdvertisementServiceImpl implements AdvertisementService {
         return AdDetailsEntity.builder()
             .adId(adDetails.getAdId())
             .maxSpeed(adDetails.getMaxSpeed())
-            .range(adDetails.getRange())
+            .productRange(adDetails.getRange())
             .weight(adDetails.getWeight())
             .accelaration(adDetails.getAccelaration())
             .color(adDetails.getColor())

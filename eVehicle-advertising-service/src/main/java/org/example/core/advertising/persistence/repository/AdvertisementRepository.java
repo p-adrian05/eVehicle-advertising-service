@@ -24,9 +24,9 @@ public interface AdvertisementRepository extends CrudRepository<AdvertisementEnt
             "and (:#{#params.brand} is null or ad.type.brandEntity.brandName =:#{#params.brand})" +
             "and (:#{#params.type} is null or ad.type.name =:#{#params.type})" +
             "and (:#{#params.drive} is null or adDetails.drive =:#{#params.drive})" +
-            "and (:#{#params.condition} is null or ad.condition =:#{#params.condition})" +
+            "and (:#{#params.productState} is null or ad.productCondition=:#{#params.productState})" +
             "and (:#{#params.minYear} is null or adDetails.year>=:#{#params.minYear})" +
-            "and (:#{#params.maxYear} is null or adDetails.year<=:#{#params.maxYear})" +
+            "and (:#{#params.maxYear} is null or adDetails.year<=:#{#params.maxYear})"+
             "and (:#{#params.minKm} is null or adDetails.km>=:#{#params.minKm})" +
             "and (:#{#params.maxKm} is null or adDetails.km<=:#{#params.maxKm})" +
             "and (:#{#params.minPrice} is null or ad.price>=:#{#params.minPrice})" +

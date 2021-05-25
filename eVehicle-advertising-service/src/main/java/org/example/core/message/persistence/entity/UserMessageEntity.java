@@ -23,7 +23,7 @@ import java.sql.Timestamp;
 @Data
 @Entity
 @Builder
-@Table(name = "users_messages")
+@Table(name = "USERS_MESSAGES")
 public class UserMessageEntity {
 
     @EmbeddedId

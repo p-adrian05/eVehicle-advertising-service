@@ -21,7 +21,7 @@ import javax.persistence.Table;
 @Entity
 @Builder
 @Data
-@Table(name = "ad_details")
+@Table(name = "AD_DETAILS")
 public class AdDetailsEntity {
 
     @Id
@@ -35,8 +35,8 @@ public class AdDetailsEntity {
     private AdvertisementEntity advertisement;
     @Column
     private String description;
-    @Column
-    private int range;
+    @Column(name="product_range")
+    private int productRange;
     @Column
     private int weight;
     @Column

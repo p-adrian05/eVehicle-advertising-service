@@ -22,7 +22,7 @@ import javax.persistence.Table;
 @NoArgsConstructor
 @Builder
 @Data
-@Table(name = "Userdata")
+@Table(name = "USERDATA")
 public class UserDataEntity {
 
     @Id

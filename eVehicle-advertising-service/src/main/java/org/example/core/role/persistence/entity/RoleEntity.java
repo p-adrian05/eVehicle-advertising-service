@@ -27,7 +27,7 @@ import java.util.Set;
 @Entity
 @Builder
 @Data
-@Table(name = "Roles")
+@Table(name = "ROLES")
 @NaturalIdCache
 public class RoleEntity {
 

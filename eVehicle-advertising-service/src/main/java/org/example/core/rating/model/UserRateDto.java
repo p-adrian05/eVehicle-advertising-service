@@ -19,8 +19,6 @@ import java.sql.Timestamp;
 @Getter
 public class UserRateDto {
 
-    private final int id;
-
     private final UserRateState ratedState;
 
     private final String description;

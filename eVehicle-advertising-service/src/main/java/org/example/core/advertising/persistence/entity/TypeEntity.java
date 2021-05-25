@@ -22,7 +22,7 @@ import javax.persistence.Table;
 @Entity
 @Builder
 @Data
-@Table(name = "Type")
+@Table(name = "TYPE")
 public class TypeEntity {
 
     @Id

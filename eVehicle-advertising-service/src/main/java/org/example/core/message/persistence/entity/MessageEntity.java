@@ -17,7 +17,7 @@ import javax.persistence.Table;
 @Data
 @Entity
 @Builder
-@Table(name = "messages")
+@Table(name = "MESSAGES")
 public class MessageEntity {
 
     @Id

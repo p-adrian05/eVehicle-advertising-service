@@ -13,6 +13,8 @@ import org.example.core.user.persistence.entity.UserEntity;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -32,7 +34,7 @@ import java.util.Set;
 @Entity
 @Builder
 @Data
-@Table(name = "Ad")
+@Table(name = "AD")
 public class AdvertisementEntity {
 
     @Id
@@ -80,13 +82,15 @@ public class AdvertisementEntity {
     @Column
     private String title;
 
-    @Column
-    private ProductState condition;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "PRODUCT_CONDITION")
+    private ProductState productCondition;
 
     @Column
     private int price;
 
     @Column
+    @Enumerated(EnumType.STRING)
     private AdState state;
 
     @Column

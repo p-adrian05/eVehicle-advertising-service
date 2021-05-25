@@ -86,7 +86,6 @@ public class RateController {
                 .title(userRate.getAdvertisement().getTitle())
                 .build())
             .created(userRate.getCreated())
-            .id(userRate.getId())
             .ratedState(userRate.getRatedState())
             .ratedUsername(userRate.getRatedUsername())
             .ratingUsername(userRate.getRatingUsername())
@@ -142,19 +141,7 @@ public class RateController {
             .build();
         userRateService.createBuyerRate(userRate);
     }
-    @PatchMapping(Mappings.RATE)
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void updateRate(@Valid @RequestBody UpdateRateDto updateRateDto, BindingResult bindingResult)
-            throws ValidationException, UnknownAdvertisementException, UnknownUserException, UnknownUserRateException {
-        if(bindingResult.hasErrors()){
-            List<String> errors = ModelDtoConverter.convertBindingErrorsToString(bindingResult.getAllErrors());
-            throw new ValidationException("Validation failed for updating user rate",errors);
-        }
-        userRateService.updateUserRate(UserRateDto.builder()
-        .id(updateRateDto.getRateId())
-        .rateState(updateRateDto.getRateState())
-        .description(updateRateDto.getDescription()).build());
-    }
+
     @GetMapping(Mappings.RATE_COUNT+"/{username}")
     @CrossOrigin
     public Map<RateState,Integer> getRatesCount(@PathVariable("username") String username) throws UnknownUserException {

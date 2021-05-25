@@ -19,7 +19,7 @@ public class AdvertisementQueryParams {
 
     private Drive drive;
 
-    private ProductState condition;
+    private ProductState productState;
 
     private Integer seatNumber;
 

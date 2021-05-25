@@ -10,6 +10,8 @@ import org.example.core.advertising.persistence.Drive;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
@@ -22,7 +24,7 @@ import javax.persistence.Table;
 @Entity
 @Builder
 @Data
-@Table(name = "basic_ad_details")
+@Table(name = "BASIC_AD_DETAILS")
 public class BasicAdDetailsEntity {
 
     @Id
@@ -47,6 +49,7 @@ public class BasicAdDetailsEntity {
     @Column
     private int performance;
     @Column
+    @Enumerated(EnumType.STRING)
     private Drive drive;
 
 }

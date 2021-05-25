@@ -11,7 +11,10 @@ import org.example.core.user.persistence.entity.UserEntity;
 
 
 import javax.persistence.Column;
+import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
@@ -25,41 +28,37 @@ import javax.persistence.Table;
 @Builder
 @Data
 @Entity
-@Table(name = "Users_rates")
+@Table(name = "USERS_RATES")
 public class UserRateEntity {
 
-    @Id
-    private int rateId;
+    @EmbeddedId
+    private UserRateId id;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @MapsId
+    @MapsId("rateId")
     @JoinColumn(name = "rate_id")
-    @ToString.Exclude
-    @EqualsAndHashCode.Exclude
     private RateEntity rate;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "rating_user_id")
-    @ToString.Exclude
-    @EqualsAndHashCode.Exclude
+    @MapsId("ratingUserId")
     private UserEntity ratingUser;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @MapsId("ratedUserId")
     @JoinColumn(name = "rated_user_id")
-    @ToString.Exclude
-    @EqualsAndHashCode.Exclude
     private UserEntity ratedUser;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ad_id")
-    @ToString.Exclude
-    @EqualsAndHashCode.Exclude
     private AdvertisementEntity advertisement;
 
     @Column
+    @Enumerated(EnumType.STRING)
     private UserRateState state;
 
     @Column
+    @Enumerated(EnumType.STRING)
     private RateStatus status;
 
     @Column(name = "activation_code")

@@ -7,6 +7,8 @@ import lombok.NoArgsConstructor;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -18,7 +20,7 @@ import java.sql.Timestamp;
 @Entity
 @Builder
 @Data
-@Table(name = "Rates")
+@Table(name = "RATES")
 public class RateEntity {
 
     @Id
@@ -26,6 +28,7 @@ public class RateEntity {
     private int id;
 
     @Column
+    @Enumerated(EnumType.STRING)
     private RateState state;
 
     @Column

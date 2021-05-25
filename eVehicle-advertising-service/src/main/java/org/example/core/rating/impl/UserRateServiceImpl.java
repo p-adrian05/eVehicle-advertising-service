@@ -172,33 +172,6 @@ public class UserRateServiceImpl implements UserRateService {
     }
 
     @Override
-    public void updateUserRate(UserRateDto userRate) throws UnknownUserRateException {
-        Optional<UserRateEntity> userRateEntity = userRateRepository.findById(userRate.getId());
-        Optional<RateEntity> rateEntity = rateRepository.findById(userRate.getId());
-        if (userRateEntity.isPresent() && rateEntity.isPresent()) {
-            UserRateEntity userRateEntityToUpdate = userRateEntity.get();
-            RateEntity rateEntityToUpdate = rateEntity.get();
-
-            log.info("Old Rate to update : {}", rateEntityToUpdate);
-            log.info("Old User Rate to update : {}", userRateEntityToUpdate);
-
-            rateEntityToUpdate.setState(userRate.getRateState());
-            rateEntityToUpdate.setDescription(userRate.getDescription());
-            if (userRate.getStatus() != null) {
-                userRateEntityToUpdate.setStatus(userRate.getStatus());
-                userRateEntityToUpdate.setActivationCode(userRate.getActivationCode());
-            }
-            userRateEntityToUpdate.setRate(rateEntityToUpdate);
-            userRateRepository.save(userRateEntityToUpdate);
-            log.info("Updated Rate : {}", rateEntity);
-
-            return;
-        }
-
-        throw new UnknownUserRateException(String.format("User rate not found by id: %s", userRate.getId()));
-    }
-
-    @Override
     public Page<UserRateDto> getRates(RateQueryParams rateQueryParams, Pageable pageable) {
         return userRateRepository.findByRatedUser_UsernameAndStateOrderByRate(rateQueryParams,pageable)
             .map(this::convertUserRateEntityToModel);
@@ -224,7 +197,6 @@ public class UserRateServiceImpl implements UserRateService {
     }
     private UserRateDto convertUserRateEntityToModel(UserRateEntity userRateEntity){
         return UserRateDto.builder()
-            .id(userRateEntity.getRateId())
             .ratingUsername(userRateEntity.getRatingUser().getUsername())
             .ratedUsername(userRateEntity.getRatedUser().getUsername())
             .advertisement(AdvertisementDto.builder()

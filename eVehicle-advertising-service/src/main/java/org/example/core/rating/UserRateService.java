@@ -24,8 +24,6 @@ public interface UserRateService {
 
     void deleteUserRate(int id) throws UnknownUserRateException;
 
-    void updateUserRate(UserRateDto userRate) throws UnknownUserException, UnknownAdvertisementException, UnknownUserRateException;
-
     Page<UserRateDto> getRates(RateQueryParams rateQueryParams, Pageable pageable);
 
     Map<RateState,Integer> getRatesCountByUsernameAndRateState(String username)  throws UnknownUserException;
