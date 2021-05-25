@@ -3,6 +3,7 @@ package org.example.core.user.impl;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.example.core.email.EmailService;
 import org.example.core.image.model.ImageDto;
 import org.example.core.image.persistence.entity.ImageEntity;
 import org.example.core.image.persistence.persistence.ImageRepository;
@@ -41,6 +42,7 @@ public class UserServiceImpl implements UserService {
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final ImageRepository imageRepository;
+    private final EmailService emailService;
 
     @Value("${user.default-role:USER}")
     private String DEFAULT_ROLE;
@@ -63,6 +65,8 @@ public class UserServiceImpl implements UserService {
         userData.setUserEntity(savedUser);
         userDataRepository.save(userData);
         log.info("Created user entity: {}",userEntity);
+
+        emailService.sendMessage(userEntity.getEmail(),userEntity.getUsername(),userEntity.getActivation());
     }
 
     @Override

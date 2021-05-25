@@ -3,6 +3,7 @@ package org.example.core.rating.persistence.repository;
 
 
 import org.example.core.rating.persistence.entity.RateState;
+import org.example.core.rating.persistence.entity.RateStatus;
 import org.example.core.rating.persistence.entity.UserRateEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -31,7 +32,7 @@ public interface UserRateRepository extends CrudRepository<UserRateEntity,Intege
 
     boolean existsByRatingUser_IdAndAdvertisement_Id(int ratingUserId, int advertisementId);
 
-    int countByRatedUser_UsernameAndRate_State(String username, RateState rateState);
+    int countByRatedUser_UsernameAndRate_StateAndStatus(String username, RateState rateState, RateStatus rateStatus);
 
     @Query(value = "SELECT r FROM UserRateEntity r join fetch r.ratedUser join fetch r.ratingUser join fetch r.rate where r.activationCode=:code  and r.status='OPEN'")
     Optional<UserRateEntity> findUserRateEntityByActivationCode(@Param("code") String code);

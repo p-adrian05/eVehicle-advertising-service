@@ -175,6 +175,7 @@ public class AdvertisementController {
         }
         CreateAdDto advertisement = ModelDtoConverter.createNewAdvertisementFromDto(createAdvertisementDto);
         AdDetailsDto adDetailsDto = ModelDtoConverter.convertAdvertisementDetailsDtoToModel(advertisementDetailsDto,0);
+
         advertisementService.createAdvertisement(advertisement, adDetailsDto, images);
     }
 

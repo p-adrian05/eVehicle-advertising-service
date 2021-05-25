@@ -34,7 +34,7 @@ public class AdvertisementDetailsDto {
     @Max(value = 99999,message = "weight: must be max 99 999")
     private int weight;
     @Min(value = 0,message = "km: must be positive or 0")
-    @Max(value = 9999999,message = "year: must be max 9 999 999")
+    @Max(value = 9999999,message = "lm: must be max 9 999 999")
     private int km;
     @Min(value = 0,message = "chargeSpeed: must be positive or 0")
     @Max(value = 99999,message = "chargeSpeed: must be max 99 999")

@@ -15,6 +15,7 @@ import org.example.core.rating.persistence.entity.RateEntity;
 import org.example.core.rating.persistence.entity.RateState;
 import org.example.core.rating.persistence.entity.RateStatus;
 import org.example.core.rating.persistence.entity.UserRateEntity;
+import org.example.core.rating.persistence.entity.UserRateId;
 import org.example.core.rating.persistence.entity.UserRateState;
 import org.example.core.rating.persistence.repository.RateQueryParams;
 import org.example.core.rating.persistence.repository.RateRepository;
@@ -82,6 +83,8 @@ public class UserRateServiceImpl implements UserRateService {
                 .build());
             log.info("Created Rate: {}", newRateEntity);
             UserRateEntity newUserRateEntity = UserRateEntity.builder()
+                .id(UserRateId.builder().rateId(newRateEntity.getId()).ratedUserId(ratedUserEntity.getId()).ratingUserId(
+                    ratingUserEntity.getId()).build())
                 .rate(newRateEntity)
                 .ratedUser(ratedUserEntity)
                 .ratingUser(ratingUserEntity)
@@ -141,6 +144,8 @@ public class UserRateServiceImpl implements UserRateService {
             .build());
         log.info("Created Rate: {}", newRateEntity);
         UserRateEntity newUserRateEntity = UserRateEntity.builder()
+            .id(UserRateId.builder().rateId(newRateEntity.getId()).ratedUserId(ratedUserEntity.getId()).ratingUserId(
+                ratingUserEntity.getId()).build())
             .rate(newRateEntity)
             .ratedUser(ratedUserEntity)
             .ratingUser(ratingUserEntity)
@@ -179,8 +184,8 @@ public class UserRateServiceImpl implements UserRateService {
 
     @Override
     public Map<RateState, Integer> getRatesCountByUsernameAndRateState(String username){
-        int positiveCount = userRateRepository.countByRatedUser_UsernameAndRate_State(username,RateState.POSITIVE);
-        int negativeCount = userRateRepository.countByRatedUser_UsernameAndRate_State(username,RateState.NEGATIVE);
+        int positiveCount = userRateRepository.countByRatedUser_UsernameAndRate_StateAndStatus(username,RateState.POSITIVE,RateStatus.CLOSED);
+        int negativeCount = userRateRepository.countByRatedUser_UsernameAndRate_StateAndStatus(username,RateState.NEGATIVE,RateStatus.CLOSED);
         Map<RateState,Integer> values = new HashMap<>();
         values.put(RateState.POSITIVE,positiveCount);
         values.put(RateState.NEGATIVE,negativeCount);
