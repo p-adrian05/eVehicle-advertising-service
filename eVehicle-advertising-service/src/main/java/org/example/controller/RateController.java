@@ -7,7 +7,6 @@ import org.example.config.Mappings;
 import org.example.controller.dto.rate.CreateUserRateAsSellerDto;
 import org.example.controller.dto.rate.CreateUserRateDto;
 import org.example.controller.dto.rate.RateAdvertisementDto;
-import org.example.controller.dto.rate.UpdateRateDto;
 import org.example.controller.dto.rate.UserRateBasicDto;
 
 import org.example.controller.util.ModelDtoConverter;
@@ -32,7 +31,6 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -99,7 +97,8 @@ public class RateController {
     @ResponseStatus(HttpStatus.CREATED)
     @CrossOrigin
     public void createRateAsBuyer(@Valid @RequestBody CreateUserRateDto createUserRateDto, BindingResult bindingResult)
-        throws UnknownAdvertisementException, UnknownUserException, ValidationException, UserRateAlreadyExistsException {
+        throws UnknownAdvertisementException, UnknownUserException, ValidationException, UserRateAlreadyExistsException,
+        UnknownUserRateException {
         if(!SecurityContextHolder.getContext().getAuthentication().getName().equals(createUserRateDto.getRatingUsername())){
             throw new AuthException("Access Denied");
         }
@@ -115,14 +114,14 @@ public class RateController {
             .ratingUsername(createUserRateDto.getRatingUsername())
             .ratedState(UserRateState.SELLER)
             .build();
-        userRateService.createSellerRate(userRate);
+        userRateService.createRate(userRate);
     }
     @PostMapping(Mappings.RATE+"/seller")
     @ResponseStatus(HttpStatus.CREATED)
     @CrossOrigin
     public void createRateAsSeller(@Valid @RequestBody CreateUserRateAsSellerDto createUserRateAsSellerDto, BindingResult bindingResult)
         throws UnknownAdvertisementException, UnknownUserException, ValidationException,
-        UnknownUserRateException {
+        UnknownUserRateException, UserRateAlreadyExistsException {
         if(!SecurityContextHolder.getContext().getAuthentication().getName().equals(createUserRateAsSellerDto.getRatingUsername())){
             throw new AuthException("Access Denied");
         }
@@ -139,7 +138,7 @@ public class RateController {
             .ratedState(UserRateState.BUYER)
             .activationCode(createUserRateAsSellerDto.getActivationCode())
             .build();
-        userRateService.createBuyerRate(userRate);
+        userRateService.createRate(userRate);
     }
 
     @GetMapping(Mappings.RATE_COUNT+"/{username}")

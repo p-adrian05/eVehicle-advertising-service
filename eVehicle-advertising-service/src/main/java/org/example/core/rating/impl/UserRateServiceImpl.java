@@ -7,7 +7,6 @@ import org.example.core.advertising.model.AdvertisementDto;
 import org.example.core.advertising.persistence.entity.AdvertisementEntity;
 import org.example.core.advertising.persistence.repository.AdvertisementRepository;
 import org.example.core.rating.UserRateService;
-
 import org.example.core.rating.exception.UnknownUserRateException;
 import org.example.core.rating.exception.UserRateAlreadyExistsException;
 import org.example.core.rating.model.UserRateDto;
@@ -18,7 +17,6 @@ import org.example.core.rating.persistence.entity.UserRateEntity;
 import org.example.core.rating.persistence.entity.UserRateId;
 import org.example.core.rating.persistence.entity.UserRateState;
 import org.example.core.rating.persistence.repository.RateQueryParams;
-import org.example.core.rating.persistence.repository.RateRepository;
 import org.example.core.rating.persistence.repository.UserRateRepository;
 import org.example.core.user.exception.UnknownUserException;
 import org.example.core.user.persistence.entity.UserEntity;
@@ -41,129 +39,97 @@ import java.util.UUID;
 public class UserRateServiceImpl implements UserRateService {
 
     private final UserRateRepository userRateRepository;
-    private final RateRepository rateRepository;
     private final UserRepository userRepository;
     private final AdvertisementRepository advertisementRepository;
 
 
     @Override
     @Transactional
-    public void createSellerRate(UserRateDto userRate)
-        throws UnknownUserException, UnknownAdvertisementException, UserRateAlreadyExistsException{
-
-        UserEntity ratingUserEntity = queryUserEntity(userRate.getRatingUsername());
-        UserEntity ratedUserEntity = queryUserEntity(userRate.getRatedUsername());
-        Optional<AdvertisementEntity>
-            advertisementEntity = advertisementRepository.findById(userRate.getAdvertisement().getId());
-        if (advertisementEntity.isEmpty()) {
-            throw new UnknownAdvertisementException("Advertisement not found");
-        }
-        String activationCode = null;
-        RateStatus rateStatus = RateStatus.OPEN;
-
-        if (userRate.getRatedState().equals(UserRateState.SELLER)) {
-            if (userRateRepository
-                .existsByRatingUser_IdAndAdvertisement_Id(ratingUserEntity.getId(),
-                    advertisementEntity.get().getId())) {
-                throw new UserRateAlreadyExistsException(
-                    String.format("Advertisement rating already exists by rating user  %s, ad id: %s",
-                        ratingUserEntity.getUsername(), advertisementEntity.get().getId()));
-            }
-            if (advertisementEntity.get().getCreator().getId() != ratedUserEntity.getId()) {
-                throw new UnknownUserException(
-                    String.format("Unknown user found for Advertisement: username : %s, ad id: %s",
-                        ratedUserEntity.getUsername(), advertisementEntity.get().getId()));
-            }
-            activationCode = UUID.randomUUID().toString();
-
-            RateEntity newRateEntity = rateRepository.save(RateEntity.builder()
-                .created(new Timestamp(new Date().getTime()))
-                .description(userRate.getDescription())
-                .state(userRate.getRateState())
-                .build());
-            log.info("Created Rate: {}", newRateEntity);
-            UserRateEntity newUserRateEntity = UserRateEntity.builder()
-                .id(UserRateId.builder().rateId(newRateEntity.getId()).ratedUserId(ratedUserEntity.getId()).ratingUserId(
-                    ratingUserEntity.getId()).build())
-                .rate(newRateEntity)
-                .ratedUser(ratedUserEntity)
-                .ratingUser(ratingUserEntity)
-                .advertisement(advertisementEntity.get())
-                .state(userRate.getRatedState())
-                .activationCode(activationCode)
-                .status(rateStatus)
-                .build();
-            log.info("Created User Rate: {}", newUserRateEntity);
-            userRateRepository.save(newUserRateEntity);
-        }
-
-    }
-    @Override
-    @Transactional
-    public void createBuyerRate(UserRateDto userRate)
-        throws UnknownUserException, UnknownAdvertisementException,
+    public void createRate(UserRateDto userRate)
+        throws UnknownUserException, UnknownAdvertisementException, UserRateAlreadyExistsException,
         UnknownUserRateException {
 
         UserEntity ratingUserEntity = queryUserEntity(userRate.getRatingUsername());
         UserEntity ratedUserEntity = queryUserEntity(userRate.getRatedUsername());
-        Optional<AdvertisementEntity>
-            advertisementEntity = advertisementRepository.findById(userRate.getAdvertisement().getId());
-        if (advertisementEntity.isEmpty()) {
-            throw new UnknownAdvertisementException("Advertisement not found");
-        }
+        AdvertisementEntity advertisementEntity = queryAdEntity(userRate.getAdvertisement().getId());
+        String activationCode = null;
         RateStatus rateStatus = RateStatus.OPEN;
-        if (userRate.getRatedState().equals(UserRateState.BUYER)) {
 
-            if (advertisementEntity.get().getCreator().getId() != ratingUserEntity.getId()) {
-                throw new UnknownUserException(
-                    String.format("Unknown user found for Advertisement: username : %s, ad id: %s",
-                        ratingUserEntity.getUsername(), advertisementEntity.get().getId()));
-            }
-            Optional<UserRateEntity> userRateToActivate =
-                userRateRepository.findUserRateEntityByActivationCode(userRate.getActivationCode());
-            System.out.println(userRate.getActivationCode());
-            if (userRateToActivate.isEmpty()) {
-                throw new UnknownUserRateException(String
-                    .format("As a buyer rate, it has no starter rate opened by as buyer: %s",
-                        userRate.getRatedUsername()));
-            }
-            if (userRateToActivate.get().getRatedUser().getUsername().equals(userRate.getRatingUsername())
-                && userRateToActivate.get().getRatingUser().getUsername().equals(userRate.getRatedUsername())) {
-                rateStatus = RateStatus.CLOSED;
-                activateUserRate(userRateToActivate.get());
-
-            } else {
-                throw new UnknownUserRateException(String.format("Invalid rating creation attempt"));
+        if (userRate.getRatedState().equals(UserRateState.SELLER) &&
+            checkRateNotExistsToAdByUsername(userRate.getAdvertisement().getId(), userRate.getRatingUsername())) {
+            if (isValidAdCreator(advertisementEntity, userRate.getRatedUsername())) {
+                activationCode = UUID.randomUUID().toString();
             }
         }
+        if (userRate.getRatedState().equals(UserRateState.BUYER) &&
+            isValidAdCreator(advertisementEntity, userRate.getRatingUsername())) {
+            activateUserRate(userRate.getActivationCode(), userRate.getRatedUsername(), userRate.getRatingUsername());
+            rateStatus = RateStatus.CLOSED;
+        }
 
-        RateEntity newRateEntity = rateRepository.save(RateEntity.builder()
-            .created(new Timestamp(new Date().getTime()))
-            .description(userRate.getDescription())
-            .state(userRate.getRateState())
-            .build());
+        RateEntity newRateEntity = createUserRate(userRate.getDescription(), userRate.getRateState());
         log.info("Created Rate: {}", newRateEntity);
         UserRateEntity newUserRateEntity = UserRateEntity.builder()
-            .id(UserRateId.builder().rateId(newRateEntity.getId()).ratedUserId(ratedUserEntity.getId()).ratingUserId(
-                ratingUserEntity.getId()).build())
+            .id(UserRateId.builder().rateId(newRateEntity.getId()).ratedUserId(ratedUserEntity.getId())
+                .ratingUserId(
+                    ratingUserEntity.getId()).build())
             .rate(newRateEntity)
             .ratedUser(ratedUserEntity)
             .ratingUser(ratingUserEntity)
-            .advertisement(advertisementEntity.get())
+            .advertisement(advertisementEntity)
             .state(userRate.getRatedState())
-            .activationCode(null)
+            .activationCode(activationCode)
             .status(rateStatus)
             .build();
         log.info("Created User Rate: {}", newUserRateEntity);
         userRateRepository.save(newUserRateEntity);
-
     }
 
+    private boolean isValidAdCreator(AdvertisementEntity advertisementEntity, String creator)
+        throws UnknownUserException {
+        if (!advertisementEntity.getCreator().getUsername().equals(creator)) {
+            throw new UnknownUserException(
+                String.format("Unknown user found for Advertisement: username : %s, ad id: %s",
+                    creator, advertisementEntity.getId()));
+        }
+        return true;
+    }
 
-    private void activateUserRate(UserRateEntity userRate) {
-        userRate.setStatus(RateStatus.CLOSED);
-        userRate.setActivationCode(null);
-        userRateRepository.save(userRate);
+    private boolean checkRateNotExistsToAdByUsername(int adId, String username) throws UserRateAlreadyExistsException {
+        if (userRateRepository
+            .existsByRatingUserUsernameAndAdvertisement_Id(username, adId)) {
+            throw new UserRateAlreadyExistsException(
+                String.format("Advertisement rating already exists by rating user  %s, ad id: %s",
+                    username, adId));
+        }
+        return true;
+    }
+
+    private RateEntity createUserRate(String description, RateState rateState) {
+        RateEntity newRateEntity = RateEntity.builder()
+            .created(new Timestamp(new Date().getTime()))
+            .description(description)
+            .state(rateState)
+            .build();
+        log.info("Created Rate: {}", newRateEntity);
+        return newRateEntity;
+    }
+
+    private void activateUserRate(String code, String ratedUsername, String ratingUsername)
+        throws UnknownUserRateException {
+        Optional<UserRateEntity> userRateToActivate =
+            userRateRepository.findUserRateEntityByActivationCode(code);
+        if (userRateToActivate.isEmpty()) {
+            throw new UnknownUserRateException("No starter rate opened was found");
+        }
+        if (userRateToActivate.get().getRatedUser().getUsername().equals(ratingUsername)
+            && userRateToActivate.get().getRatingUser().getUsername().equals(ratedUsername)) {
+            userRateToActivate.get().setStatus(RateStatus.CLOSED);
+            userRateToActivate.get().setActivationCode(null);
+            userRateRepository.save(userRateToActivate.get());
+        }else{
+            throw new UnknownUserRateException("Invalid rating creation attempt");
+        }
     }
 
     @Override
@@ -172,23 +138,24 @@ public class UserRateServiceImpl implements UserRateService {
             throw new UnknownUserRateException(String.format("User rate not found by id: %s", id));
         }
         userRateRepository.deleteById(id);
-        rateRepository.deleteById(id);
         log.info("Deleted Rate id: {}", id);
     }
 
     @Override
     public Page<UserRateDto> getRates(RateQueryParams rateQueryParams, Pageable pageable) {
-        return userRateRepository.findByRatedUser_UsernameAndStateOrderByRate(rateQueryParams,pageable)
+        return userRateRepository.findByRatedUser_UsernameAndStateOrderByRate(rateQueryParams, pageable)
             .map(this::convertUserRateEntityToModel);
     }
 
     @Override
-    public Map<RateState, Integer> getRatesCountByUsernameAndRateState(String username){
-        int positiveCount = userRateRepository.countByRatedUser_UsernameAndRate_StateAndStatus(username,RateState.POSITIVE,RateStatus.CLOSED);
-        int negativeCount = userRateRepository.countByRatedUser_UsernameAndRate_StateAndStatus(username,RateState.NEGATIVE,RateStatus.CLOSED);
-        Map<RateState,Integer> values = new HashMap<>();
-        values.put(RateState.POSITIVE,positiveCount);
-        values.put(RateState.NEGATIVE,negativeCount);
+    public Map<RateState, Integer> getRatesCountByUsernameAndRateState(String username) {
+        int positiveCount = userRateRepository
+            .countByRatedUser_UsernameAndRate_StateAndStatus(username, RateState.POSITIVE, RateStatus.CLOSED);
+        int negativeCount = userRateRepository
+            .countByRatedUser_UsernameAndRate_StateAndStatus(username, RateState.NEGATIVE, RateStatus.CLOSED);
+        Map<RateState, Integer> values = new HashMap<>();
+        values.put(RateState.POSITIVE, positiveCount);
+        values.put(RateState.NEGATIVE, negativeCount);
         return values;
     }
 
@@ -200,7 +167,16 @@ public class UserRateServiceImpl implements UserRateService {
         log.info("Queried user : {}", userEntity.get());
         return userEntity.get();
     }
-    private UserRateDto convertUserRateEntityToModel(UserRateEntity userRateEntity){
+    private AdvertisementEntity queryAdEntity(int adId) throws UnknownAdvertisementException {
+        Optional<AdvertisementEntity>
+            advertisementEntity = advertisementRepository.findById(adId);
+        if (advertisementEntity.isEmpty()) {
+            throw new UnknownAdvertisementException("Advertisement not found");
+        }
+        return advertisementEntity.get();
+    }
+
+    private UserRateDto convertUserRateEntityToModel(UserRateEntity userRateEntity) {
         return UserRateDto.builder()
             .ratingUsername(userRateEntity.getRatingUser().getUsername())
             .ratedUsername(userRateEntity.getRatedUser().getUsername())

@@ -15,12 +15,9 @@ import java.util.Map;
 
 public interface UserRateService {
 
-     void createSellerRate(UserRateDto userRate)
-        throws UnknownUserException, UnknownAdvertisementException, UserRateAlreadyExistsException;
-
-     void createBuyerRate(UserRateDto userRate)
-        throws UnknownUserException, UnknownAdvertisementException,
-        UnknownUserRateException;
+     void createRate(UserRateDto userRate)
+         throws UnknownUserException, UnknownAdvertisementException, UserRateAlreadyExistsException,
+         UnknownUserRateException;
 
     void deleteUserRate(int id) throws UnknownUserRateException;
 

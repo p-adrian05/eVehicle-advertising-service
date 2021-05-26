@@ -10,6 +10,7 @@ import org.example.core.advertising.persistence.entity.AdvertisementEntity;
 import org.example.core.user.persistence.entity.UserEntity;
 
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
@@ -34,7 +35,7 @@ public class UserRateEntity {
     @EmbeddedId
     private UserRateId id;
 
-    @OneToOne(fetch = FetchType.LAZY)
+    @OneToOne(fetch = FetchType.LAZY,cascade = CascadeType.ALL)
     @MapsId("rateId")
     @JoinColumn(name = "rate_id")
     private RateEntity rate;

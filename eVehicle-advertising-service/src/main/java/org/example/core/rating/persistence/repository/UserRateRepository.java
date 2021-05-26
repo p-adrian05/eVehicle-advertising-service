@@ -30,7 +30,7 @@ public interface UserRateRepository extends CrudRepository<UserRateEntity,Intege
                     "and (:#{#params.ratingUsername} is null or r.ratingUser.username=:#{#params.ratingUsername})  ")
     Page<UserRateEntity> findByRatedUser_UsernameAndStateOrderByRate(@Param("params") RateQueryParams params, Pageable pageable);
 
-    boolean existsByRatingUser_IdAndAdvertisement_Id(int ratingUserId, int advertisementId);
+    boolean existsByRatingUserUsernameAndAdvertisement_Id(String username, int advertisementId);
 
     int countByRatedUser_UsernameAndRate_StateAndStatus(String username, RateState rateState, RateStatus rateStatus);
 
