@@ -17,7 +17,7 @@ public class DeleteMessageDto {
 
     @NotNull(message = "senderUserName: cannot be null")
     @NotEmpty(message = "senderUserName: cannot be empty")
-    private String senderUserName;
+    private String senderUsername;
 
     @NotNull(message = "receiverUsername: cannot be null")
     @NotEmpty(message = "receiverUsername: cannot be empty")

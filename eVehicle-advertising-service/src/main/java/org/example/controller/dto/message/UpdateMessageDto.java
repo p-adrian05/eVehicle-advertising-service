@@ -18,7 +18,4 @@ public class UpdateMessageDto {
 
     private String senderUsername;
 
-    private String receiverUsername;
-
-    private boolean unread;
 }

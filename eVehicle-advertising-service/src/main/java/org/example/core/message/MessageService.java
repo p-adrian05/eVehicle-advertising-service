@@ -14,16 +14,19 @@ public interface MessageService {
 
     void createMessage(MessageDto messageDto) throws UnknownUserException;
 
-    void deleteMessage(MessageDto messageDto) throws DeleteMessageException, UnknownMessageException, UnknownUserException;
+    void deleteMessage(MessageDto messageDto)
+        throws DeleteMessageException, UnknownMessageException, UnknownUserException;
 
-    void updateMessage(MessageDto messageDto) throws UnknownUserException, UnknownMessageException,
-        UpdateMessageException;
+    void updateMessage(int messageId, String content) throws UpdateMessageException;
 
-    Page<MessageDto> getMessagesByUsernames(String username1, String username2, Pageable pageable) throws UnknownUserException;
+    void readMessage(int messageId, String receiverUsername, String senderUsername) throws UnknownMessageException;
 
-     Page<MessagePartnerDto>  getConversationUsernames(String username, Pageable pageable);
+    Page<MessageDto> getMessagesByUsernames(String username1, String username2, Pageable pageable)
+        throws UnknownUserException;
+
+    Page<MessagePartnerDto> getConversationUsernames(String username, Pageable pageable);
 
     int newMessagesCount(String username);
 
-     boolean isThereNewMessage(String receiverUsername,String senderUsername);
+    boolean isThereNewMessage(String receiverUsername, String senderUsername);
 }

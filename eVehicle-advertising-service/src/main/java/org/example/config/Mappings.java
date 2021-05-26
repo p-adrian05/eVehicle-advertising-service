@@ -8,6 +8,7 @@ public class Mappings {
     public static final String RATES = "rates";
     public static final String COUNT = "count";
     public static final String RATE_COUNT = RATES+"/"+COUNT;
+    public static final String READ = "read";
 
     public static final String MESSAGES = "messages";
     public static final String MESSAGE = "message";

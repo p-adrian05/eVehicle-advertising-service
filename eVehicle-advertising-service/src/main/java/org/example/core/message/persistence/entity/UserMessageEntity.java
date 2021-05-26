@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.example.core.user.persistence.entity.UserEntity;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
@@ -29,7 +30,7 @@ public class UserMessageEntity {
     @EmbeddedId
     private UserMessageId id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY,cascade = CascadeType.REMOVE)
     @MapsId("messageId")
     @JoinColumn(name = "message_id")
     @ToString.Exclude

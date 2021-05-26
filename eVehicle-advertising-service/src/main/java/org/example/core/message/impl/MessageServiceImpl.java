@@ -3,7 +3,6 @@ package org.example.core.message.impl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.core.message.MessageService;
-
 import org.example.core.message.exception.DeleteMessageException;
 import org.example.core.message.exception.UnknownMessageException;
 import org.example.core.message.exception.UpdateMessageException;
@@ -20,14 +19,16 @@ import org.example.core.user.persistence.repository.UserRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.core.userdetails.User;
+import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 
 import java.sql.Timestamp;
 import java.util.Date;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 @Slf4j
@@ -41,82 +42,73 @@ public class MessageServiceImpl implements MessageService {
     @Override
     public void createMessage(MessageDto messageDto) throws UnknownUserException {
         UserEntity senderUser = queryUserEntity(messageDto.getSenderUserName());
-        log.info("Creating nem message, sender user: {}",senderUser);
-        UserEntity receiverUserEntity =  queryUserEntity(messageDto.getReceiverUsername());
-        log.info("Creating nem message, receiver user: {}",receiverUserEntity);
+        log.info("Creating nem message, sender user: {}", senderUser);
+        UserEntity receiverUserEntity = queryUserEntity(messageDto.getReceiverUsername());
+        log.info("Creating nem message, receiver user: {}", receiverUserEntity);
         MessageEntity messageEntity = MessageEntity.builder()
             .content(messageDto.getContent())
             .build();
         MessageEntity newMessageEntity = messageRepository.save(messageEntity);
-        log.info("New message: {}",messageEntity);
-            UserMessageEntity userMessageEntity = UserMessageEntity.builder()
-                .message(newMessageEntity)
-                .id(new UserMessageId())
-                .receiverUser(receiverUserEntity)
-                .senderUser(senderUser)
-                .unread(true)
-                .sentTime(new Timestamp(new Date().getTime()))
-                .build();
-            userMessageRepository.save(userMessageEntity);
-            log.info("Created new user-message connection: {}",userMessageEntity);
+        log.info("New message: {}", messageEntity);
+        UserMessageEntity userMessageEntity = UserMessageEntity.builder()
+            .message(newMessageEntity)
+            .id(new UserMessageId())
+            .receiverUser(receiverUserEntity)
+            .senderUser(senderUser)
+            .unread(true)
+            .sentTime(new Timestamp(new Date().getTime()))
+            .build();
+        userMessageRepository.save(userMessageEntity);
+        log.info("Created new user-message connection: {}", userMessageEntity);
     }
 
     @Override
-    public void deleteMessage(MessageDto messageDto) throws DeleteMessageException, UnknownMessageException, UnknownUserException {
-        int senderUserId = queryUserEntity(messageDto.getSenderUserName()).getId();
-        int receiverUserId = queryUserEntity(messageDto.getReceiverUsername()).getId();
-
-        log.info("Deleting message, sender user id: {}",senderUserId);
-        log.info("Deleting message, receiver user id: {}",receiverUserId);
-        UserMessageId userMessageId = new UserMessageId(messageDto.getId(),senderUserId,receiverUserId);
-        UserMessageEntity userMessageEntity = queryUserMessage(userMessageId);
-        if(!userMessageEntity.isUnread()){
+    public void deleteMessage(MessageDto messageDto)
+        throws DeleteMessageException, UnknownMessageException {
+        UserMessageEntity userMessageEntity =
+            queryUserMessage(messageDto.getId(), messageDto.getReceiverUsername(), messageDto.getSenderUserName());
+        if (!userMessageEntity.isUnread()) {
             throw new DeleteMessageException("Message is already have read, cannot delete");
         }
-        userMessageRepository.deleteById(userMessageId);
-        log.info("Deleted user-message connection: {}",userMessageEntity);
-        if(userMessageRepository.countUserMessageEntityByMessage_Id(messageDto.getId())==0){
-            messageRepository.deleteById(messageDto.getId());
-            log.info("Deleted message id: {}",messageDto.getId());
-        }
+        userMessageRepository.delete(userMessageEntity);
     }
 
     @Override
-    public void updateMessage(MessageDto messageDto) throws UnknownUserException, UnknownMessageException,
-        UpdateMessageException {
-        int senderUserId = queryUserEntity(messageDto.getSenderUserName()).getId();
-        int receiverUserId = queryUserEntity(messageDto.getReceiverUsername()).getId();
-        UserMessageId userMessageId = new UserMessageId(messageDto.getId(),senderUserId,receiverUserId);
-        UserMessageEntity userMessageEntity =queryUserMessage(userMessageId);
-        userMessageEntity.setUnread(messageDto.isUnread());
-        userMessageRepository.save(userMessageEntity);
-
-        if(messageDto.getContent() != null){
-            if(userMessageRepository.countDistinctByUnreadIsFalseAndMessage_Id(messageDto.getId())!=0){
+    public void updateMessage(int messageId, String content) throws UpdateMessageException {
+        if (content != null) {
+            if (userMessageRepository.countDistinctByUnreadIsFalseAndMessage_Id(messageId) != 0) {
                 throw new UpdateMessageException("Message is already have read, cannot update");
             }
-            MessageEntity messageEntity = MessageEntity.builder()
-                .id(messageDto.getId())
-                .content(messageDto.getContent())
-                .build();
-            log.info("Updated message : {}",messageEntity);
-            messageRepository.save(messageEntity);
+            Optional<MessageEntity> messageEntity = messageRepository.findById(messageId);
+            if (messageEntity.isPresent()) {
+                messageEntity.get().setContent(content);
+                log.info("Updated message : {}", messageEntity);
+                messageRepository.save(messageEntity.get());
+            } else {
+                throw new UpdateMessageException("Message not exists");
+            }
         }
     }
 
-    @Override
-    public Page<MessageDto> getMessagesByUsernames(String username1, String username2, Pageable pageable) throws UnknownUserException {
-        UserEntity userEntity1 = queryUserEntity(username1);
-        UserEntity userEntity2 =  queryUserEntity(username2);
-        log.info("Query messages for user: {}",userEntity1.getUsername());
-        log.info("Query messages for user: {}",userEntity2.getUsername());
-        return userMessageRepository.findBySenderAndReceiverIds(userEntity1.getId(),userEntity2.getId(),pageable)
-            .map(messageEntity ->{
+    public void readMessage(int messageId, String receiverUsername, String senderUsername)
+        throws UnknownMessageException {
+        UserMessageEntity userMessageEntity =
+            queryUserMessage(messageId, receiverUsername, senderUsername);
+        userMessageEntity.setUnread(false);
+        userMessageRepository.save(userMessageEntity);
+    }
 
-                if(messageEntity.getId().getReceiverId() == userEntity1.getId()){
+    @Override
+    public Page<MessageDto> getMessagesByUsernames(String username1, String username2, Pageable pageable)
+        throws UnknownUserException {
+        UserEntity userEntity1 = queryUserEntity(username1);
+        UserEntity userEntity2 = queryUserEntity(username2);
+        return userMessageRepository.findBySenderAndReceiverIds(userEntity1.getId(), userEntity2.getId(), pageable)
+            .map(messageEntity -> {
+                if (messageEntity.getId().getReceiverId() == userEntity1.getId()) {
                     messageEntity.setReceiverUser(userEntity1);
                     messageEntity.setSenderUser(userEntity2);
-                }else{
+                } else {
                     messageEntity.setReceiverUser(userEntity2);
                     messageEntity.setSenderUser(userEntity1);
                 }
@@ -131,76 +123,83 @@ public class MessageServiceImpl implements MessageService {
     }
 
     /**
-     *
      * @param username
      * @return conversation partner name - boolean pair, where boolean is
      * true when the conversation contains at least one new message
      */
-    @Override
-    public Page<MessagePartnerDto> getConversationUsernames(String username, Pageable pageable){
-        List<MessagePartnerDto> partnerNamesAndSentTime = new LinkedList<>();
-        userMessageRepository.getConversationPartnerNames(username).forEach(arr->{
-            if(arr[0].equals(username)){
-                MessagePartnerDto messagePartner = new MessagePartnerDto(arr[1],arr[2],false);
-                if(!partnerNamesAndSentTime.contains(messagePartner)){
-                    partnerNamesAndSentTime.add(messagePartner);
-                }
-            }else{
-                MessagePartnerDto messagePartner = new MessagePartnerDto(arr[0],arr[2],false);
-                if(!partnerNamesAndSentTime.contains(messagePartner)){
-                    partnerNamesAndSentTime.add(messagePartner);
-                }
+
+    private Set<MessagePartnerDto> getMessagePartners(String username) {
+        Set<MessagePartnerDto> partnerNamesAndSentTime = new LinkedHashSet<>();
+
+        userMessageRepository.getConversationPartnerNames(username).forEach(arr -> {
+            if (arr[0].equals(username)) {
+                MessagePartnerDto messagePartner = new MessagePartnerDto(arr[1], arr[2], false);
+                partnerNamesAndSentTime.add(messagePartner);
+            } else {
+                MessagePartnerDto messagePartner = new MessagePartnerDto(arr[0], arr[2], false);
+                partnerNamesAndSentTime.add(messagePartner);
             }
         });
+        return partnerNamesAndSentTime;
+    }
 
+    @Override
+    public Page<MessagePartnerDto> getConversationUsernames(String username, Pageable pageable) {
+        List<MessagePartnerDto> partnerNames = new LinkedList<>(getMessagePartners(username));
+        Pair<Integer, Integer> indexFromTo = calcIndexPair(pageable, partnerNames.size());
+        Page<MessagePartnerDto> pagedPartnerNames =
+            new PageImpl<>(partnerNames.subList(indexFromTo.getFirst(), indexFromTo.getSecond()), pageable,
+                partnerNames.size());
+        return pagedPartnerNames
+            .map(partner -> MessagePartnerDto.builder()
+                .isThereNewMessage(isThereNewMessage(username, partner.getPartnerUsername()))
+                .sentTime(partner.getSentTime())
+                .partnerUsername(partner.getPartnerUsername())
+                .build());
+    }
 
-        List<MessagePartnerDto> partnerNames = partnerNamesAndSentTime;
-        int fromIndex = partnerNames.size();
+    private Pair<Integer, Integer> calcIndexPair(Pageable pageable, int totalSize) {
+        int fromIndex = totalSize;
         int toIndex = 0;
-        if(pageable.getOffset()<partnerNames.size()){
+        if (pageable.getOffset() < totalSize) {
             fromIndex = (int) pageable.getOffset();
         }
-        if(pageable.getOffset()+pageable.getPageSize()< partnerNames.size()){
-            toIndex = (int) (pageable.getOffset()+ pageable.getPageSize());
-        }else {
-            toIndex = partnerNames.size();
+        if (pageable.getOffset() + pageable.getPageSize() < totalSize) {
+            toIndex = (int) (pageable.getOffset() + pageable.getPageSize());
+        } else {
+            toIndex = totalSize;
         }
-        Page<MessagePartnerDto> pagedPartnerNames = new PageImpl<>(partnerNames.subList(fromIndex, toIndex), pageable, partnerNames.size());
-        return pagedPartnerNames
-                .map(partner-> {
-                    return MessagePartnerDto.builder()
-                        .isThereNewMessage(isThereNewMessage(username,partner.getPartnerUsername()))
-                        .sentTime(partner.getSentTime())
-                        .partnerUsername(partner.getPartnerUsername())
-                        .build();
-                });
+        return Pair.of(fromIndex, toIndex);
     }
 
     @Override
-    public boolean isThereNewMessage(String receiverUsername,String senderUsername){
+    public boolean isThereNewMessage(String receiverUsername, String senderUsername) {
         return userMessageRepository
-            .existsDistinctByReceiverUser_UsernameAndSenderUser_UsernameAndUnreadIsTrue(receiverUsername,senderUsername);
+            .existsDistinctByReceiverUser_UsernameAndSenderUser_UsernameAndUnreadIsTrue(receiverUsername,
+                senderUsername);
     }
+
     @Override
-    public int newMessagesCount(String username){
+    public int newMessagesCount(String username) {
         return userMessageRepository.countByReceiverUserUsernameAndUnreadIsTrue(username);
     }
+
     private UserEntity queryUserEntity(String username) throws UnknownUserException {
         Optional<UserEntity> userEntity = userRepository.findByUsername(username);
         if (userEntity.isEmpty()) {
             throw new UnknownUserException(String.format("User not found: %s", username));
         }
-        log.info("Queried user : {}", userEntity.get());
         return userEntity.get();
     }
 
-    private UserMessageEntity queryUserMessage(UserMessageId userMessageId) throws UnknownMessageException {
+    private UserMessageEntity queryUserMessage(int messageId, String receiverUsername, String senderUsername)
+        throws UnknownMessageException {
         Optional<UserMessageEntity> userMessageEntity = userMessageRepository
-            .findById(userMessageId);
-        if(userMessageEntity.isEmpty()){
-            throw new UnknownMessageException(String.format("Message not found %s", userMessageId));
+            .findByMessage_IdAndReceiverUser_UsernameAndAndSenderUser_Username(messageId, receiverUsername,
+                senderUsername);
+        if (userMessageEntity.isEmpty()) {
+            throw new UnknownMessageException("Message not found");
         }
-        log.info("Queried user message : {}",userMessageEntity.get());
         return userMessageEntity.get();
     }
 
