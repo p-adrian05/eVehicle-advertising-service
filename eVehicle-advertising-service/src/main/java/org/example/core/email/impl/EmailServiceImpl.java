@@ -4,6 +4,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.core.email.EmailService;
 import org.example.core.security.AuthException;
+import org.example.core.user.UserAfterCreatedObserver;
+import org.example.core.user.UserCreateObserver;
+import org.example.core.user.model.CreatedUserDto;
+import org.example.core.user.persistence.entity.UserEntity;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.mail.SimpleMailMessage;
@@ -15,7 +19,7 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 @PropertySource("classpath:application.properties")
-public class EmailServiceImpl implements EmailService {
+public class EmailServiceImpl implements EmailService, UserAfterCreatedObserver {
 
 
     private final JavaMailSender javaMailSender;
@@ -43,5 +47,10 @@ public class EmailServiceImpl implements EmailService {
             log.error("Error to sent email: "+email+" "+e.getMessage());
             throw new AuthException("Failed to sent email to registration validation");
         }
+    }
+
+    @Override
+    public void handleCreatedUser(CreatedUserDto createdUserDto) {
+        sendMessage(createdUserDto.getEmail(),createdUserDto.getEmail(),createdUserDto.getActivationCode());
     }
 }

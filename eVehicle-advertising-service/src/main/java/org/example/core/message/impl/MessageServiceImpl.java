@@ -122,12 +122,6 @@ public class MessageServiceImpl implements MessageService {
             });
     }
 
-    /**
-     * @param username
-     * @return conversation partner name - boolean pair, where boolean is
-     * true when the conversation contains at least one new message
-     */
-
     private Set<MessagePartnerDto> getMessagePartners(String username) {
         Set<MessagePartnerDto> partnerNamesAndSentTime = new LinkedHashSet<>();
 

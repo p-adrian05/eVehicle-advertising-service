@@ -16,6 +16,7 @@ import org.example.core.role.exception.RoleModificationException;
 import org.example.core.role.exception.UnknownRoleException;
 import org.example.core.security.AuthException;
 import org.example.core.user.LoginService;
+import org.example.core.user.UserDataService;
 import org.example.core.user.UserService;
 import org.example.core.user.exception.EmailAlreadyExistsException;
 import org.example.core.user.exception.UnknownUserException;
@@ -54,6 +55,7 @@ public class UserController {
     private final UserService userService;
     private final RoleService roleService;
     private final LoginService loginService;
+    private final UserDataService userDataService;
 
 
     @GetMapping(Mappings.USER+"/{username}")
@@ -68,7 +70,7 @@ public class UserController {
     @GetMapping(Mappings.USER+"/{username}/"+Mappings.DETAILS)
     @CrossOrigin
     public UserDataDto getUserData(@PathVariable String username) throws UnknownUserException {
-        Optional<UserDataDto> userDataDto = userService.getUserData(username);
+        Optional<UserDataDto> userDataDto = userDataService.getUserData(username);
         if(userDataDto.isPresent()){
             return userDataDto.get();
         }
@@ -85,7 +87,7 @@ public class UserController {
             List<String> errors = ModelDtoConverter.convertBindingErrorsToString(bindingResult.getAllErrors());
             throw new ValidationException("Validation failed for UserDataDto",errors);
         }
-        userService.updateUserData(ModelDtoConverter.convertUserDataDtoToUserData(updateUserDataDto));
+        userDataService.updateUserData(ModelDtoConverter.convertUserDataDtoToUserData(updateUserDataDto));
     }
     @PostMapping(Mappings.USER)
     @ResponseStatus(HttpStatus.CREATED)

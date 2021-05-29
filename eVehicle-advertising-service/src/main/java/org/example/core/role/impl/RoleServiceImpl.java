@@ -5,8 +5,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.core.role.RoleService;
 import org.example.core.role.exception.RoleAlreadyExistsException;
 import org.example.core.role.exception.RoleModificationException;
+import org.example.core.role.exception.UnknownRoleException;
 import org.example.core.role.persistence.entity.RoleEntity;
 import org.example.core.role.persistence.repository.RoleRepository;
+import org.example.core.user.UserCreateObserver;
 import org.example.core.user.persistence.entity.UserEntity;
 import org.example.core.user.persistence.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,13 +17,14 @@ import org.springframework.stereotype.Service;
 import javax.transaction.Transactional;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Slf4j
 @Service
-public class RoleServiceImpl implements RoleService {
+public class RoleServiceImpl implements RoleService, UserCreateObserver {
 
     private final RoleRepository roleRepository;
     private final UserRepository userRepository;
@@ -80,5 +83,18 @@ public class RoleServiceImpl implements RoleService {
             throw new RoleModificationException(String.format("User not found %s",username));
         }
         return userEntity.get();
+    }
+
+    @Override
+    public void handleNewUser(UserEntity userEntity) {
+        userEntity.setRoles(Set.of(queryDefaultRole()));
+    }
+
+    private RoleEntity queryDefaultRole(){
+        Optional<RoleEntity> roleEntity = roleRepository.findRoleEntityByRoleName(DEFAULT_ROLE);
+        if(roleEntity.isEmpty()){
+            return roleRepository.save(RoleEntity.builder().roleName(DEFAULT_ROLE).build());
+        }
+        return roleEntity.get();
     }
 }

@@ -5,6 +5,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.core.image.ImageService;
 import org.example.core.image.persistence.entity.ImageEntity;
 import org.example.core.image.persistence.persistence.ImageRepository;
+import org.example.core.user.UserCreateObserver;
+import org.example.core.user.persistence.entity.UserEntity;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
@@ -17,9 +20,11 @@ import java.util.Optional;
 @RequiredArgsConstructor
 @Slf4j
 @Service
-public class ImageServiceImpl implements ImageService {
+public class ImageServiceImpl implements ImageService, UserCreateObserver {
 
     private final ImageRepository imageRepository;
+    @Value("${user.default-image_id:1}")
+    private String DEFAULT_IMAGE_ID;
 
     @Override
     @Transactional
@@ -58,5 +63,15 @@ public class ImageServiceImpl implements ImageService {
     public void deleteImage(String path) {
         Optional<ImageEntity> imageEntity = imageRepository.findByPath(path);
         imageRepository.delete(imageEntity.orElseThrow(() -> new IllegalArgumentException("Image path not exits")));
+    }
+
+    private ImageEntity queryDefaultProfileImageEntity() {
+        Optional<ImageEntity> imageEntity = imageRepository.findById(Integer.valueOf(DEFAULT_IMAGE_ID));
+        return imageEntity.orElse(null);
+    }
+
+    @Override
+    public void handleNewUser(UserEntity userEntity) {
+        userEntity.setProfileImage(queryDefaultProfileImageEntity());
     }
 }
