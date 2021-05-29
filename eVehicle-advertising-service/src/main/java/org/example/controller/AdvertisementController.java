@@ -10,6 +10,7 @@ import org.example.controller.dto.advertisement.AdvertisementDetailsDto;
 import org.example.controller.dto.advertisement.CreateAdvertisementDto;
 import org.example.controller.dto.advertisement.SavedAdDto;
 import org.example.controller.util.ModelDtoConverter;
+import org.example.core.advertising.AdVehicleService;
 import org.example.core.advertising.AdvertisementService;
 import org.example.core.advertising.exception.UnknownAdvertisementException;
 import org.example.core.advertising.exception.UnknownCategoryException;
@@ -39,7 +40,6 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -64,6 +64,7 @@ import java.util.stream.Collectors;
 public class AdvertisementController {
 
     private final AdvertisementService advertisementService;
+    private final AdVehicleService adVehicleService;
     private final StorageService storageService;
 
     @GetMapping(Mappings.ADVERTISEMENTS)
@@ -81,7 +82,7 @@ public class AdvertisementController {
         AdvertisementQueryParams
             adQueryParams = ModelDtoConverter.convertSearchParamsToObject(searchParams, AdvertisementQueryParams.class);
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortOrder),
-            advertisementService.convertSortParamToValidForm(sortParam)));
+            adVehicleService.convertSortParamToValidForm(sortParam)));
         return advertisementService.getAdvertisements(adQueryParams, pageable);
     }
 
@@ -189,20 +190,20 @@ public class AdvertisementController {
     @GetMapping(Mappings.ADVERTISEMENT + "/" + Mappings.BRANDS + "/{category}")
     @CrossOrigin
     public List<String> getBrandNamesByCategory(@PathVariable("category") String category) {
-        return advertisementService.getBrandNamesByCategory(category);
+        return adVehicleService.getBrandNamesByCategory(category);
     }
 
     @GetMapping(Mappings.ADVERTISEMENT + "/" + Mappings.BRAND + "/{brandName}/" + Mappings.TYPES)
     @CrossOrigin
     public List<String> getCarTypesByBrand(@PathVariable("brandName") String brandName,
                                            @RequestParam(required = false) String category) {
-        return advertisementService.getCarTypesByBrandName(category, brandName);
+        return adVehicleService.getCarTypesByBrandName(category, brandName);
     }
 
     @GetMapping(Mappings.ADVERTISEMENT + "/" + Mappings.CATEGORIES)
     @CrossOrigin
     public List<String> getCategories() {
-        return advertisementService.getCategories();
+        return adVehicleService.getCategories();
     }
 
     @GetMapping(value = Mappings.IMG + "/{path}/{filename}", produces = MediaType.IMAGE_JPEG_VALUE)

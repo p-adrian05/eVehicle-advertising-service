@@ -16,7 +16,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -39,14 +38,6 @@ public interface AdvertisementService {
     Map<Integer, String> getSavedAdvertisementTitlesByUsername(String username);
 
     Page<AdLabelDto> getAdvertisementsByUsername(String username, Pageable pageable, AdState state);
-
-    String convertSortParamToValidForm(String sortParam);
-
-    List<String> getBrandNamesByCategory(String category);
-
-    List<String> getCarTypesByBrandName(String category, String brandName);
-
-    List<String> getCategories();
 
     void changeState(int adId, AdState stateToChange, String creatorName) throws UnknownAdvertisementException;
 
