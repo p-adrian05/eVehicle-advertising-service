@@ -145,7 +145,7 @@ class AdUtil {
             .state(advertisementEntity.getState())
             .type(advertisementEntity.getType().getName())
             .imagePaths(advertisementEntity.getImages().stream()
-                .map(ImageEntity::getPath).collect(Collectors.toList()))
+                .map(ImageEntity::getPath).collect(Collectors.toSet()))
             .build();
     }
 

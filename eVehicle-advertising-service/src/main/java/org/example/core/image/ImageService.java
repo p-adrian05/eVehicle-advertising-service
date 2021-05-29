@@ -2,7 +2,9 @@ package org.example.core.image;
 
 import org.example.core.image.persistence.entity.ImageEntity;
 
+import java.nio.file.Path;
 import java.util.List;
+import java.util.Set;
 
 public interface ImageService {
 
@@ -10,5 +12,6 @@ public interface ImageService {
 
     void deleteImage(String path);
 
-    List<ImageEntity> createImageEntities(List<String> paths);
+    Set<ImageEntity> createImageEntities(Set<Path> paths);
+
 }

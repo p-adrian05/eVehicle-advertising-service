@@ -1,8 +1,8 @@
-package org.example.core.image.impl;
+package org.example.core.storage.impl;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.tomcat.util.http.fileupload.FileUploadException;
-import org.example.core.image.StorageService;
+import org.example.core.storage.StorageService;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
@@ -50,6 +50,7 @@ public class StorageServiceImpl implements StorageService {
         }
        throw new FileUploadException(String.format("Failed to upload file: %s",file.getOriginalFilename()));
     }
+
 
     @Override
     public Path store(MultipartFile file,String fileName) throws FileUploadException {

@@ -19,8 +19,9 @@ import org.example.core.advertising.persistence.entity.TypeEntity;
 import org.example.core.advertising.persistence.repository.AdvertisementQueryParams;
 import org.example.core.advertising.persistence.repository.AdvertisementRepository;
 import org.example.core.image.ImageService;
-import org.example.core.image.StorageService;
 import org.example.core.security.AuthException;
+import org.example.core.storage.AdImageStorageService;
+import org.example.core.storage.StorageService;
 import org.example.core.user.exception.UnknownUserException;
 import org.example.core.user.persistence.entity.UserEntity;
 import org.example.core.user.persistence.repository.UserRepository;
@@ -32,15 +33,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.transaction.Transactional;
+import java.nio.file.Path;
 import java.sql.Timestamp;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -57,6 +56,7 @@ public class AdvertisementServiceImpl implements AdvertisementService {
     private final ImageService imageService;
     private final UserRepository userRepository;
     private final StorageService storageService;
+    private final AdImageStorageService adImageStorageService;
     private final AdUtil adUtil;
     private final AdDetailsService adDetailsService;
 
@@ -66,31 +66,14 @@ public class AdvertisementServiceImpl implements AdvertisementService {
                                     MultipartFile[] imageFiles)
         throws UnknownUserException, UnknownCategoryException, FileUploadException {
 
-        String folderName = "";
-        Map<String, MultipartFile> filesToSave = new HashMap<>();
-        Set<String> imageModels = new HashSet<>();
-        String[] pathValues;
-
-        for (Map.Entry<MultipartFile, String> entry : createImagePaths(imageFiles).entrySet()) {
-            pathValues = getFolderNameAndFilenameFromPath(entry.getValue());
-            if (folderName.equals("")) {
-                folderName = pathValues[0];
-            }
-            imageModels.add(entry.getValue());
-            filesToSave.put(pathValues[1], entry.getKey());
-        }
         AdvertisementEntity advertisementEntity = createNewAdvertisement(advertisementDto);
-        advertisementEntity.setImages(new HashSet<>(
-            imageService
-                .createImageEntities(new ArrayList<>(imageModels))));
-
+        Set<Path> imagePaths = adImageStorageService.store(imageFiles);
+        advertisementEntity.setImages(
+            imageService.createImageEntities(imagePaths));
         AdvertisementEntity newAdvertisementEntity = advertisementRepository.save(advertisementEntity);
         log.info("New advertisementEntity: {}", newAdvertisementEntity);
 
-        adDetailsService.createAdDetails(adDetailsDto,newAdvertisementEntity);
-
-        storageService.store(filesToSave, folderName);
-
+        adDetailsService.createAdDetails(adDetailsDto, newAdvertisementEntity);
     }
 
     private String[] getFolderNameAndFilenameFromPath(String path) {
@@ -118,7 +101,6 @@ public class AdvertisementServiceImpl implements AdvertisementService {
     }
 
 
-
     private void updateAdvertisement(AdvertisementDto advertisementDto)
         throws UnknownCategoryException, UnknownAdvertisementException {
         AdvertisementEntity advertisementEntity = queryAdvertisementEntity(advertisementDto.getId());
@@ -133,7 +115,9 @@ public class AdvertisementServiceImpl implements AdvertisementService {
         advertisementEntity.setPrice(advertisementDto.getPrice());
         if (advertisementDto.getImagePaths() != null) {
             advertisementEntity
-                .setImages(new HashSet<>(imageService.createImageEntities(advertisementDto.getImagePaths())));
+                .setImages(
+                    imageService.createImageEntities(advertisementDto.getImagePaths().stream().map(Path::of).collect(
+                        Collectors.toSet())));
         }
 
         log.info("Updated Advertisement entity: {}", advertisementEntity);
@@ -167,7 +151,7 @@ public class AdvertisementServiceImpl implements AdvertisementService {
         Set<String> newImageNames =
             imageFileNames.stream().filter(name -> !originalImagesPaths.contains(name)).collect(Collectors.toSet());
 
-        List<String> imagePaths = new LinkedList<>();
+        Set<String> imagePaths = new HashSet<>();
         String folderName = "";
         String[] pathValues;
         Map<String, MultipartFile> filesToSave = new HashMap<>();
@@ -269,6 +253,7 @@ public class AdvertisementServiceImpl implements AdvertisementService {
         log.info("Queried advertisement : {}", advertisementEntity);
         return advertisementEntity.get();
     }
+
     private AdvertisementEntity createNewAdvertisement(CreateAdDto advertisementDto)
         throws UnknownCategoryException, UnknownUserException {
 

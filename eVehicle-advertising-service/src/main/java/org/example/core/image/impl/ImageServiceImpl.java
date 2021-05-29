@@ -11,11 +11,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
+import java.nio.file.Path;
 import java.sql.Timestamp;
 import java.util.Date;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 
 @RequiredArgsConstructor
 @Slf4j
@@ -40,16 +41,18 @@ public class ImageServiceImpl implements ImageService, UserCreateObserver {
 
     @Override
     @Transactional
-    public List<ImageEntity> createImageEntities(List<String> paths) {
-        List<ImageEntity> imageEntities = new LinkedList<>();
+    public Set<ImageEntity> createImageEntities(Set<Path> paths) {
+        Set<ImageEntity> imageEntities = new HashSet<>();
         Optional<ImageEntity> imageEntity;
-        for (String path : paths) {
-            imageEntity = imageRepository.findByPath(path);
+
+        for (Path path : paths) {
+            path = path.subpath(1,path.getNameCount());
+            imageEntity = imageRepository.findByPath(path.toString());
             if (imageEntity.isPresent()) {
                 imageEntities.add(imageEntity.get());
             } else {
                 imageEntities.add(imageRepository.save(ImageEntity.builder()
-                    .path(path)
+                    .path(path.toString())
                     .uploadedTime(new Timestamp(new Date().getTime()))
                     .build()
                 ));

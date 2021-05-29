@@ -9,6 +9,7 @@ import org.example.core.advertising.persistence.ProductState;
 
 import java.sql.Timestamp;
 import java.util.List;
+import java.util.Set;
 
 @Builder
 @EqualsAndHashCode
@@ -36,5 +37,5 @@ public class AdvertisementDto {
 
         private final Timestamp created;
 
-        private final List<String> imagePaths;
+        private final Set<String> imagePaths;
 }
