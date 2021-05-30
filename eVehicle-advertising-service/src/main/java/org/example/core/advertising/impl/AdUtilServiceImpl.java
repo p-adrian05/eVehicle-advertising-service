@@ -1,27 +1,35 @@
 package org.example.core.advertising.impl;
 
 import lombok.RequiredArgsConstructor;
-import org.example.core.advertising.AdVehicleService;
+import lombok.extern.slf4j.Slf4j;
+import org.example.core.advertising.AdUtilService;
+import org.example.core.advertising.exception.MaximumSavedAdsReachedException;
+import org.example.core.advertising.exception.UnknownAdvertisementException;
 import org.example.core.advertising.model.BasicAdDetails;
+import org.example.core.advertising.persistence.entity.AdvertisementEntity;
 import org.example.core.advertising.persistence.entity.CategoryEntity;
 import org.example.core.advertising.persistence.repository.AdvertisementRepository;
 import org.example.core.advertising.persistence.repository.CategoryRepository;
+import org.example.core.user.exception.UnknownUserException;
 import org.example.core.user.persistence.entity.UserEntity;
 import org.example.core.user.persistence.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
+import javax.transaction.Transactional;
 import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 @Service
 @RequiredArgsConstructor
-public class AdVehicleServiceImpl implements AdVehicleService {
+@Slf4j
+public class AdUtilServiceImpl implements AdUtilService {
 
     private final AdvertisementRepository advertisementRepository;
     private final CategoryRepository categoryRepository;
@@ -69,5 +77,49 @@ public class AdVehicleServiceImpl implements AdVehicleService {
         return userEntity.get().getSavedAds().stream()
             .map(advertisementEntity -> Map.entry(advertisementEntity.getId(), advertisementEntity.getTitle()))
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    }
+
+    @Override
+    @Transactional
+    public void removeSaveAd(String username, int adId) throws UnknownUserException, UnknownAdvertisementException,
+        MaximumSavedAdsReachedException {
+        UserEntity userEntity =  getUserByName(username);
+        log.info("Removing saved Ad from user with username: {}",username);
+        modifySaveAds(userEntity,adId,userEntity::removeSavedAd);
+    }
+
+    @Override
+    @Transactional
+    public void addSaveAd(String username, int adId) throws UnknownUserException, UnknownAdvertisementException, MaximumSavedAdsReachedException {
+        UserEntity userEntity =  getUserByName(username);
+        log.info("Removing saved Ad from user with username: {}",username);
+        modifySaveAds(userEntity,adId,userEntity::addSavedAd);
+    }
+
+    protected void modifySaveAds(UserEntity userEntity, int adId, Consumer<AdvertisementEntity> saveAdsModifier) throws
+        UnknownAdvertisementException, MaximumSavedAdsReachedException {
+        Optional<AdvertisementEntity> advertisementEntity =  advertisementRepository.findById(adId);
+        log.info("User saved ads: {}",userEntity.getSavedAds());
+        if(userEntity.getSavedAds().size()==15){
+            throw new MaximumSavedAdsReachedException(String.format("Maximum saved ads 15 reached for user: %s",userEntity.getUsername()));
+        }
+        if(advertisementEntity.isPresent()){
+            saveAdsModifier.accept(advertisementEntity.get());
+            log.info("Modified advertisement: {}",advertisementEntity);
+            log.info("User saved ads after modification : {}",userEntity.getSavedAds());
+            userRepository.save(userEntity);
+        }else {
+            throw new UnknownAdvertisementException(String.format("No ad found %s",adId));
+        }
+
+    }
+
+    private UserEntity getUserByName(String username) throws UnknownUserException {
+        Optional<UserEntity> userEntity = userRepository.findByUsername(username);
+        if(userEntity.isPresent()){
+           return userEntity.get();
+        }else{
+            throw new UnknownUserException(String.format("Unknown user: %s",username));
+        }
     }
 }

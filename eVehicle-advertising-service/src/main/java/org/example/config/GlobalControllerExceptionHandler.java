@@ -3,6 +3,7 @@ package org.example.config;
 
 import org.example.controller.ValidationException;
 import org.example.core.advertising.exception.CreateAdvertisementException;
+import org.example.core.advertising.exception.MaximumSavedAdsReachedException;
 import org.example.core.advertising.exception.UnknownAdvertisementException;
 import org.example.core.advertising.exception.UnknownCategoryException;
 import org.example.core.image.exception.UnknownImageException;
@@ -58,7 +59,8 @@ public class GlobalControllerExceptionHandler {
             return errorInfo;
       }
       @ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
-      @ExceptionHandler(value = {DeleteMessageException.class, UpdateMessageException.class, CreateAdvertisementException.class})
+      @ExceptionHandler(value = {DeleteMessageException.class, UpdateMessageException.class, CreateAdvertisementException.class,
+          MaximumSavedAdsReachedException.class})
       @ResponseBody
       public ErrorInfo handleDeleteUpdateMessageException(HttpServletRequest req, Exception ex) {
             return new ErrorInfo(new Timestamp(new Date().getTime()),HttpStatus.UNPROCESSABLE_ENTITY.value(),

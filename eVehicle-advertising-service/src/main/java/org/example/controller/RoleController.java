@@ -73,26 +73,5 @@ public class RoleController {
     public void deleteRole(@RequestBody String role) throws UnknownRoleException {
         roleService.deleteRole(role);
     }
-//    @PatchMapping(Mappings.USER_SAVED_AD)
-//    @ResponseStatus(HttpStatus.NO_CONTENT)
-//    public void modifyMarkedAd(@Valid @RequestBody UserMarkedAdDto userMarkedAdDto, BindingResult bindingResult)
-//            throws UnknownUserException, UnknownAdvertisementException, ValidationException {
-//        if(!SecurityContextHolder.getContext().getAuthentication().getName().equals(userMarkedAdDto.getUsername())){
-//            throw new AuthException("Access Denied");
-//        }
-//        if(bindingResult.hasErrors()){
-//            List<String> errors = ModelDtoConverter.convertBindingErrorsToString(bindingResult.getAllErrors());
-//            throw new ValidationException("Validation failed userMarkedAdDto",errors);
-//        }
-//        if(userMarkedAdDto.getOperation().equals("add")){
-//            userService.addSaveAd(userMarkedAdDto.getUsername(),userMarkedAdDto.getAdId());
-//        }else if(userMarkedAdDto.getOperation().equals("delete")){
-//            userService.removeSaveAd(userMarkedAdDto.getUsername(),userMarkedAdDto.getAdId());
-//        }else {
-//            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-//                    String.format("unknown operation: %s",userMarkedAdDto.getOperation()));
-//        }
-//    }
-
 
 }

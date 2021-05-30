@@ -8,9 +8,11 @@ import org.example.config.Mappings;
 import org.example.controller.dto.advertisement.AdvertisementDetailsDto;
 import org.example.controller.dto.advertisement.CreateAdvertisementDto;
 import org.example.controller.dto.advertisement.SavedAdDto;
+import org.example.controller.dto.user.UserMarkedAdDto;
 import org.example.controller.util.ModelDtoConverter;
-import org.example.core.advertising.AdVehicleService;
+import org.example.core.advertising.AdUtilService;
 import org.example.core.advertising.AdvertisementService;
+import org.example.core.advertising.exception.MaximumSavedAdsReachedException;
 import org.example.core.advertising.exception.UnknownAdvertisementException;
 import org.example.core.advertising.exception.UnknownCategoryException;
 import org.example.core.advertising.model.AdDetailsDto;
@@ -39,15 +41,19 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import javax.validation.Valid;
+import java.awt.Image;
+import java.awt.Toolkit;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
@@ -63,7 +69,7 @@ import java.util.stream.Collectors;
 public class AdvertisementController {
 
     private final AdvertisementService advertisementService;
-    private final AdVehicleService adVehicleService;
+    private final AdUtilService adUtilService;
     private final AdImageStorageService storageService;
 
     @GetMapping(Mappings.ADVERTISEMENTS)
@@ -81,7 +87,7 @@ public class AdvertisementController {
         AdvertisementQueryParams
             adQueryParams = ModelDtoConverter.convertSearchParamsToObject(searchParams, AdvertisementQueryParams.class);
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortOrder),
-            adVehicleService.convertSortParamToValidForm(sortParam)));
+            adUtilService.convertSortParamToValidForm(sortParam)));
         return advertisementService.getAdvertisements(adQueryParams, pageable);
     }
 
@@ -118,7 +124,7 @@ public class AdvertisementController {
     @GetMapping(Mappings.ADVERTISEMENTS + "/{username}/" + Mappings.SAVED)
     @CrossOrigin
     public Collection<SavedAdDto> getSavedAdvertisementsByUsername(@PathVariable("username") String username) {
-        return adVehicleService.getSavedAdvertisementTitlesByUsername(username).entrySet().stream()
+        return adUtilService.getSavedAdvertisementTitlesByUsername(username).entrySet().stream()
             .map(entry -> SavedAdDto.builder()
                 .adId(entry.getKey()).title(entry.getValue()).build()).collect(Collectors.toList());
     }
@@ -145,6 +151,9 @@ public class AdvertisementController {
             List<String> errors = ModelDtoConverter.convertBindingErrorsToString(bindingResult.getAllErrors());
             throw new ValidationException("Validation failed for updated advertisement", errors);
         }
+        if(!checkIfImageIsValid(images)){
+            throw new ValidationException("Validation failed for images", List.of("Wrong image format"));
+        }
         UpdateAdvertisementDto advertisement = UpdateAdvertisementDto.builder()
             .id(id)
             .category(updateAdvertisementDto.getCategory())
@@ -154,7 +163,7 @@ public class AdvertisementController {
             .title(updateAdvertisementDto.getTitle())
             .type(updateAdvertisementDto.getType())
             .build();
-        AdDetailsDto adDetails = ModelDtoConverter.convertAdvertisementDetailsDtoToModel(advertisementDetailsDto,id);
+        AdDetailsDto adDetails = ModelDtoConverter.convertAdvertisementDetailsDtoToModel(advertisementDetailsDto, id);
         advertisementService.updateAdvertisementWithDetails(advertisement, adDetails, images);
     }
 
@@ -164,19 +173,37 @@ public class AdvertisementController {
                                     @Valid @ModelAttribute AdvertisementDetailsDto advertisementDetailsDto,
                                     @RequestParam MultipartFile[] images, BindingResult bindingResult)
         throws ValidationException, UnknownCategoryException,
-        UnknownUserException, UnknownAdvertisementException, FileUploadException {
+        UnknownUserException, UnknownAdvertisementException, FileUploadException, IOException {
         if (!SecurityContextHolder.getContext().getAuthentication().getName()
             .equals(createAdvertisementDto.getCreator())) {
             throw new AuthException("Access Denied");
+        }
+        if(!checkIfImageIsValid(images)){
+            throw new ValidationException("Validation failed for images", List.of("Wrong image format"));
         }
         if (bindingResult.hasErrors()) {
             List<String> errors = ModelDtoConverter.convertBindingErrorsToString(bindingResult.getAllErrors());
             throw new ValidationException("Validation failed for creating advertisement", errors);
         }
         CreateAdDto advertisement = ModelDtoConverter.createNewAdvertisementFromDto(createAdvertisementDto);
-        AdDetailsDto adDetailsDto = ModelDtoConverter.convertAdvertisementDetailsDtoToModel(advertisementDetailsDto,0);
+        AdDetailsDto adDetailsDto = ModelDtoConverter.convertAdvertisementDetailsDtoToModel(advertisementDetailsDto, 0);
 
         advertisementService.createAdvertisement(advertisement, adDetailsDto, images);
+        Toolkit toolkit = Toolkit.getDefaultToolkit();
+        Image image = toolkit.createImage(images[0].getBytes(), 300, 300);
+        image.getScaledInstance(300, 200, 0);
+    }
+
+    private boolean checkIfImageIsValid(MultipartFile[] multipartFiles) {
+        Toolkit toolkit = Toolkit.getDefaultToolkit();
+        for (MultipartFile multipartFile : multipartFiles) {
+            try {
+                toolkit.createImage(multipartFile.getBytes(), 300, 300).getScaledInstance(100, 100, 1);
+            } catch (Exception e) {
+                return false;
+            }
+        }
+        return true;
     }
 
     @PatchMapping(Mappings.ADVERTISEMENT + "/{id}/{state}")
@@ -189,35 +216,55 @@ public class AdvertisementController {
     @GetMapping(Mappings.ADVERTISEMENT + "/" + Mappings.BRANDS + "/{category}")
     @CrossOrigin
     public List<String> getBrandNamesByCategory(@PathVariable("category") String category) {
-        return adVehicleService.getBrandNamesByCategory(category);
+        return adUtilService.getBrandNamesByCategory(category);
     }
 
     @GetMapping(Mappings.ADVERTISEMENT + "/" + Mappings.BRAND + "/{brandName}/" + Mappings.TYPES)
     @CrossOrigin
     public List<String> getCarTypesByBrand(@PathVariable("brandName") String brandName,
                                            @RequestParam(required = false) String category) {
-        return adVehicleService.getCarTypesByBrandName(category, brandName);
+        return adUtilService.getCarTypesByBrandName(category, brandName);
     }
 
     @GetMapping(Mappings.ADVERTISEMENT + "/" + Mappings.CATEGORIES)
     @CrossOrigin
     public List<String> getCategories() {
-        return adVehicleService.getCategories();
+        return adUtilService.getCategories();
     }
 
     @GetMapping(value = Mappings.IMG + "/{path}/{filename}", produces = MediaType.IMAGE_JPEG_VALUE)
     @CrossOrigin
     public @ResponseBody
     byte[] getAdImage(@PathVariable String path, @PathVariable String filename) {
-        //todo megprobalni atmeretezni a kepete, ellenorizve hogy valoban kep e
-        //todo adatbaziban teljes path nem tarolni
         try {
-            InputStream in = storageService.loadAdImage(path+"/"+filename).getInputStream();
+            InputStream in = storageService.loadAdImage(path + "/" + filename).getInputStream();
             byte[] data = in.readAllBytes();
             in.close();
             return data;
         } catch (ResourceAccessException | IOException e) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Image not found", e);
+        }
+    }
+
+    @PatchMapping(Mappings.USER_SAVED_AD)
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void modifyMarkedAd(@Valid @RequestBody UserMarkedAdDto userMarkedAdDto, BindingResult bindingResult)
+        throws UnknownUserException, UnknownAdvertisementException, ValidationException,
+        MaximumSavedAdsReachedException {
+        if (!SecurityContextHolder.getContext().getAuthentication().getName().equals(userMarkedAdDto.getUsername())) {
+            throw new AuthException("Access Denied");
+        }
+        if (bindingResult.hasErrors()) {
+            List<String> errors = ModelDtoConverter.convertBindingErrorsToString(bindingResult.getAllErrors());
+            throw new ValidationException("Validation failed userMarkedAdDto", errors);
+        }
+        if (userMarkedAdDto.getOperation().equals("add")) {
+            adUtilService.addSaveAd(userMarkedAdDto.getUsername(), userMarkedAdDto.getAdId());
+        } else if (userMarkedAdDto.getOperation().equals("delete")) {
+            adUtilService.removeSaveAd(userMarkedAdDto.getUsername(), userMarkedAdDto.getAdId());
+        } else {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                String.format("unknown operation: %s", userMarkedAdDto.getOperation()));
         }
     }
 }
