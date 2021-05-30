@@ -19,6 +19,7 @@ import org.example.core.advertising.persistence.entity.TypeEntity;
 import org.example.core.advertising.persistence.repository.AdvertisementQueryParams;
 import org.example.core.advertising.persistence.repository.AdvertisementRepository;
 import org.example.core.image.ImageService;
+import org.example.core.image.persistence.entity.ImageEntity;
 import org.example.core.security.AuthException;
 import org.example.core.storage.AdImageStorageService;
 import org.example.core.storage.StorageService;
@@ -39,11 +40,9 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
@@ -76,33 +75,40 @@ public class AdvertisementServiceImpl implements AdvertisementService {
         adDetailsService.createAdDetails(adDetailsDto, newAdvertisementEntity);
     }
 
-    private String[] getFolderNameAndFilenameFromPath(String path) {
-        String[] pathArray = path.split("/");
-        if (pathArray.length >= 2) {
-            return new String[] {pathArray[pathArray.length - 2], pathArray[pathArray.length - 1]};
+    private Set<ImageEntity> getUpdatedImages(Set<ImageEntity> currentImages, MultipartFile[] imageFiles)
+        throws FileUploadException {
+        Set<String> imageFileNames =
+            Arrays.stream(imageFiles).map(MultipartFile::getOriginalFilename).collect(Collectors.toSet());
+        Set<String> originalImagesPaths = currentImages.stream().map(
+            ImageEntity::getPath).collect(Collectors.toSet());
+
+        Set<ImageEntity> toDeleteImages =
+            currentImages.stream().filter(imageEntity -> !imageFileNames.contains(imageEntity.getPath()))
+                .collect(Collectors.toSet());
+
+        MultipartFile[] newFiles = Arrays.stream(imageFiles)
+            .filter(imageFile -> !originalImagesPaths.contains(imageFile.getOriginalFilename()))
+            .toArray(MultipartFile[]::new);
+
+        Set<ImageEntity> notToRemoveImageEntities =
+            currentImages.stream().filter(imageEntity -> imageFileNames.contains(imageEntity.getPath()))
+                .collect(Collectors.toSet());
+        notToRemoveImageEntities.addAll(imageService.createImageEntities(adImageStorageService.store(newFiles)));
+        deleteImageFiles(toDeleteImages.stream().map(ImageEntity::getPath).collect(Collectors.toList()));
+        return notToRemoveImageEntities;
+    }
+
+    @Override
+    @Transactional
+    public void updateAdvertisementWithDetails(UpdateAdvertisementDto advertisementDto, AdDetailsDto adDetails,
+                                                MultipartFile[] imageFiles)
+        throws UnknownAdvertisementException, UnknownCategoryException, FileUploadException {
+
+        if (!advertisementRepository.existsByIdAndAndCreator_Username(advertisementDto.getId(),
+            SecurityContextHolder.getContext().getAuthentication().getName())) {
+            throw new AuthException("Access denied");
         }
-        return new String[] {"", ""};
-    }
 
-    private Map<MultipartFile, String> createImagePaths(MultipartFile[] imageFiles) {
-        String folderName = storageService.generateFolderName();
-        return Arrays.stream(imageFiles)
-            .map(image -> Map.entry(image, "/" + folderName + "/" + generateAdImageName("jpg"))).collect(
-                Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-    }
-
-    private String generateAdImageName(String extension) {
-        StringBuilder name = new StringBuilder();
-        name.append("ad");
-        name.append(UUID.randomUUID());
-        name.append(".");
-        name.append(extension);
-        return name.toString();
-    }
-
-
-    private void updateAdvertisement(AdvertisementDto advertisementDto)
-        throws UnknownCategoryException, UnknownAdvertisementException {
         AdvertisementEntity advertisementEntity = queryAdvertisementEntity(advertisementDto.getId());
         CategoryEntity categoryEntity = adUtil.queryCategory(advertisementDto.getCategory());
         TypeEntity typeEntity = adUtil.getTypeEntity(advertisementDto.getType());
@@ -113,83 +119,14 @@ public class AdvertisementServiceImpl implements AdvertisementService {
         advertisementEntity.setProductCondition(advertisementDto.getCondition());
         advertisementEntity.setTitle(advertisementDto.getTitle());
         advertisementEntity.setPrice(advertisementDto.getPrice());
-        if (advertisementDto.getImagePaths() != null) {
-            advertisementEntity
-                .setImages(
-                    imageService.createImageEntities(advertisementDto.getImagePaths().stream().map(Path::of).collect(
-                        Collectors.toSet())));
-        }
-
-        log.info("Updated Advertisement entity: {}", advertisementEntity);
-
+        adDetailsService.updateAdDetails(adDetails);
+        advertisementEntity.setImages(getUpdatedImages(advertisementEntity.getImages(),imageFiles));
         advertisementRepository.save(advertisementEntity);
     }
 
-    @Override
-    @Transactional
-    public void updateAdvertisementWithDetails(UpdateAdvertisementDto advertisement, AdDetailsDto adDetails,
-                                               MultipartFile[] imageFiles)
-        throws UnknownAdvertisementException, UnknownCategoryException, FileUploadException {
-
-        if (!advertisementRepository.existsByIdAndAndCreator_Username(advertisement.getId(),
-            SecurityContextHolder.getContext().getAuthentication().getName())) {
-            throw new AuthException("Access denied");
-        }
-
-        Set<String> imageFileNames =
-            Arrays.stream(imageFiles).map(MultipartFile::getOriginalFilename).collect(Collectors.toSet());
-
-        Optional<AdvertisementDto> advertisementDto = getAdvertisementById(advertisement.getId());
-        if (advertisementDto.isEmpty()) {
-            throw new UnknownAdvertisementException("Unkown ad");
-        }
-        Set<String> originalImagesPaths = new HashSet<>(advertisementDto.get().getImagePaths());
-
-        Set<String> toDeleteImagePaths = originalImagesPaths.stream()
-            .filter(image -> !imageFileNames.contains(image)).collect(Collectors.toSet());
-
-        Set<String> newImageNames =
-            imageFileNames.stream().filter(name -> !originalImagesPaths.contains(name)).collect(Collectors.toSet());
-
-        Set<String> imagePaths = new HashSet<>();
-        String folderName = "";
-        String[] pathValues;
-        Map<String, MultipartFile> filesToSave = new HashMap<>();
-        Map<MultipartFile, String> newImageFilePathPairs = createImagePaths(Arrays.stream(imageFiles)
-            .filter(imageFile -> newImageNames.contains(imageFile.getOriginalFilename()))
-            .toArray(MultipartFile[]::new));
-
-        for (Map.Entry<MultipartFile, String> entry : newImageFilePathPairs.entrySet()) {
-            pathValues = getFolderNameAndFilenameFromPath(entry.getValue());
-            if (folderName.equals("")) {
-                folderName = pathValues[0];
-            }
-            imagePaths.add(entry.getValue());
-            filesToSave.put(pathValues[1], entry.getKey());
-        }
-        Arrays.stream(imageFiles)
-            .filter(imageFile -> !newImageNames.contains(imageFile.getOriginalFilename()))
-            .forEach(imageFile -> imagePaths.add(imageFile.getOriginalFilename()));
-
-        AdvertisementDto newAdvertisementDto = AdvertisementDto.builder()
-            .brand(advertisement.getBrand())
-            .category(advertisement.getCategory())
-            .condition(advertisement.getCondition())
-            .id(advertisement.getId())
-            .imagePaths(imagePaths)
-            .price(advertisement.getPrice())
-            .title(advertisement.getTitle())
-            .type(advertisement.getType())
-            .build();
-
-        storageService.store(filesToSave, folderName);
-        deleteImageFiles(toDeleteImagePaths);
-        adDetailsService.updateAdDetails(adDetails);
-        this.updateAdvertisement(newAdvertisementDto);
-    }
 
     private void deleteImageFiles(Collection<String> toDeletedImageModels) {
-        toDeletedImageModels.forEach(imagePath -> storageService.deleteByPath("images" + imagePath));
+        toDeletedImageModels.forEach(imagePath -> storageService.deleteByPath(Path.of("images/" + imagePath)));
     }
 
     @Override

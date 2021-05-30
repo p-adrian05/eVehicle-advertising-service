@@ -4,13 +4,17 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.tomcat.util.http.fileupload.FileUploadException;
 import org.example.core.storage.AdImageStorageService;
-import org.example.core.storage.StorageService2;
+import org.example.core.storage.StorageService;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.PostConstruct;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
@@ -26,7 +30,7 @@ public class AdImageStorageServiceImpl implements AdImageStorageService {
     @Value("${ad.default-image-root-location:images}")
     private Path rootLocation;
 
-    private final StorageService2 storageService;
+    private final StorageService storageService;
 
     @PostConstruct
     public void init() {
@@ -64,7 +68,6 @@ public class AdImageStorageServiceImpl implements AdImageStorageService {
             imageName = generateAdImageName("jpg");
             imagePaths.add(storageService.store(multipartFile,folderPath,imageName));
         }
-        log.info(imagePaths.toString());
         return imagePaths;
     }
 
@@ -78,6 +81,22 @@ public class AdImageStorageServiceImpl implements AdImageStorageService {
         paths.forEach(storageService::deleteByPath);
     }
 
+    @Override
+    public Resource loadAdImage(String path) {
+        try{
+            Resource resource;
+            Path file = Path.of("images").resolve(path);
+            resource = new UrlResource(file.toUri());
+            if(resource.exists() || resource.isReadable()){
+                return resource;
+            }else{
+                throw new ResourceAccessException("Could not read file"+path);
+            }
+        }catch (MalformedURLException e){
+            throw new ResourceAccessException("Could not read file"+path,e);
+        }
+
+    }
     private String generateAdImageName(String extension) {
         StringBuilder name = new StringBuilder();
         name.append("ad");

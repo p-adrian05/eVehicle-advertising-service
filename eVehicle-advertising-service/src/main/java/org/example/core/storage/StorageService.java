@@ -5,23 +5,12 @@ import org.springframework.core.io.Resource;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.nio.file.Path;
-import java.util.Map;
 
 public interface StorageService {
 
-    void init();
+     Path store(MultipartFile file,Path folderPath,String fileName) throws FileUploadException;
 
-    Path store(MultipartFile file, String folderName, String fileName) throws FileUploadException;
-
-    Path store(MultipartFile file, String fileName) throws FileUploadException;
-
-    void store(Map<String, MultipartFile> filesToSave, String folderName) throws FileUploadException;
+    void deleteByPath(Path path);
 
     Resource loadAsResource(String filename, String path);
-
-    String generateFolderName();
-
-    Path loadPath(String fileName);
-
-    void deleteByPath(String path);
 }

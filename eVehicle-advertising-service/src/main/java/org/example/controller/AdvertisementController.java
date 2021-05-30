@@ -5,7 +5,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.tomcat.util.http.fileupload.FileUploadException;
 import org.example.config.AttributeNames;
 import org.example.config.Mappings;
-
 import org.example.controller.dto.advertisement.AdvertisementDetailsDto;
 import org.example.controller.dto.advertisement.CreateAdvertisementDto;
 import org.example.controller.dto.advertisement.SavedAdDto;
@@ -22,7 +21,7 @@ import org.example.core.advertising.model.UpdateAdvertisementDto;
 import org.example.core.advertising.persistence.AdState;
 import org.example.core.advertising.persistence.repository.AdvertisementQueryParams;
 import org.example.core.security.AuthException;
-import org.example.core.storage.StorageService;
+import org.example.core.storage.AdImageStorageService;
 import org.example.core.user.exception.UnknownUserException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -65,7 +64,7 @@ public class AdvertisementController {
 
     private final AdvertisementService advertisementService;
     private final AdVehicleService adVehicleService;
-    private final StorageService storageService;
+    private final AdImageStorageService storageService;
 
     @GetMapping(Mappings.ADVERTISEMENTS)
     @CrossOrigin
@@ -213,7 +212,7 @@ public class AdvertisementController {
         //todo megprobalni atmeretezni a kepete, ellenorizve hogy valoban kep e
         //todo adatbaziban teljes path nem tarolni
         try {
-            InputStream in = storageService.loadAsResource(filename, path).getInputStream();
+            InputStream in = storageService.loadAdImage(path+"/"+filename).getInputStream();
             byte[] data = in.readAllBytes();
             in.close();
             return data;
