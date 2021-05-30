@@ -22,10 +22,8 @@ import org.example.core.image.ImageService;
 import org.example.core.image.persistence.entity.ImageEntity;
 import org.example.core.security.AuthException;
 import org.example.core.storage.AdImageStorageService;
-import org.example.core.storage.StorageService;
 import org.example.core.user.exception.UnknownUserException;
 import org.example.core.user.persistence.entity.UserEntity;
-import org.example.core.user.persistence.repository.UserRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -39,8 +37,6 @@ import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -53,8 +49,6 @@ public class AdvertisementServiceImpl implements AdvertisementService {
 
     private final AdvertisementRepository advertisementRepository;
     private final ImageService imageService;
-    private final UserRepository userRepository;
-    private final StorageService storageService;
     private final AdImageStorageService adImageStorageService;
     private final AdUtil adUtil;
     private final AdDetailsService adDetailsService;
@@ -126,7 +120,7 @@ public class AdvertisementServiceImpl implements AdvertisementService {
 
 
     private void deleteImageFiles(Collection<String> toDeletedImageModels) {
-        toDeletedImageModels.forEach(imagePath -> storageService.deleteByPath(Path.of("images/" + imagePath)));
+        toDeletedImageModels.forEach(adImageStorageService::deleteImageByPath);
     }
 
     @Override
@@ -151,16 +145,7 @@ public class AdvertisementServiceImpl implements AdvertisementService {
             .map(adUtil::convertAdvertisementEntityToLabelDto);
     }
 
-    @Override
-    public Map<Integer, String> getSavedAdvertisementTitlesByUsername(String username) {
-        Optional<UserEntity> userEntity = userRepository.findByUsername(username);
-        if (userEntity.isEmpty()) {
-            return new HashMap<>();
-        }
-        return userEntity.get().getSavedAds().stream()
-            .map(advertisementEntity -> Map.entry(advertisementEntity.getId(), advertisementEntity.getTitle()))
-            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-    }
+
 
     @Override
     public Page<AdLabelDto> getAdvertisementsByUsername(String username, Pageable pageable, AdState state) {

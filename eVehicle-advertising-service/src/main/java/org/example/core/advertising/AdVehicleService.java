@@ -1,6 +1,7 @@
 package org.example.core.advertising;
 
 import java.util.List;
+import java.util.Map;
 
 public interface AdVehicleService {
 
@@ -13,4 +14,5 @@ public interface AdVehicleService {
 
      String convertSortParamToValidForm(String sortParam);
 
+     Map<Integer, String> getSavedAdvertisementTitlesByUsername(String username);
 }

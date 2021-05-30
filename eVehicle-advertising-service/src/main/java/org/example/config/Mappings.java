@@ -33,6 +33,10 @@ public class Mappings {
     public static final String USER_DETAILS = USER+"/"+DETAILS;
 
     public static final String CATEGORIES = "categories";
+    public static final String ROLE = "role";
+    public static final String AUTHENTICATE = "authenticate";
+    public static final String ACTIVATE = "activate";
+    public static final String AUTHENTICATE_ACTIVATE = AUTHENTICATE+"/"+ACTIVATE;
 
 
 }

@@ -16,7 +16,6 @@ import org.example.core.advertising.persistence.entity.TypeEntity;
 import org.example.core.advertising.persistence.repository.BrandRepository;
 import org.example.core.advertising.persistence.repository.CategoryRepository;
 import org.example.core.advertising.persistence.repository.TypeRepository;
-import org.example.core.image.model.ImageDto;
 import org.example.core.image.persistence.entity.ImageEntity;
 import org.example.core.user.exception.UnknownUserException;
 import org.example.core.user.persistence.entity.UserEntity;
@@ -146,26 +145,6 @@ class AdUtil {
             .type(advertisementEntity.getType().getName())
             .imagePaths(advertisementEntity.getImages().stream()
                 .map(ImageEntity::getPath).collect(Collectors.toSet()))
-            .build();
-    }
-
-    ImageDto convertImageEntityToModel(ImageEntity imageEntity) {
-        return ImageDto.builder()
-            .id(imageEntity.getId())
-            .path(imageEntity.getPath())
-            .uploadedTime(imageEntity.getUploadedTime())
-            .build();
-    }
-
-    AdDetailsDto convertAdDetailsEntityToModel(AdDetailsEntity adDetailsEntity) {
-        return AdDetailsDto.builder()
-            .adId(adDetailsEntity.getAdId())
-            .description(adDetailsEntity.getDescription())
-            .color(adDetailsEntity.getColor())
-            .accelaration(adDetailsEntity.getAccelaration())
-            .range(adDetailsEntity.getProductRange())
-            .maxSpeed(adDetailsEntity.getMaxSpeed())
-            .weight(adDetailsEntity.getWeight())
             .build();
     }
 

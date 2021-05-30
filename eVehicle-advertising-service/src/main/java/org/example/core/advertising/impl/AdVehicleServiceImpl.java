@@ -6,11 +6,16 @@ import org.example.core.advertising.model.BasicAdDetails;
 import org.example.core.advertising.persistence.entity.CategoryEntity;
 import org.example.core.advertising.persistence.repository.AdvertisementRepository;
 import org.example.core.advertising.persistence.repository.CategoryRepository;
+import org.example.core.user.persistence.entity.UserEntity;
+import org.example.core.user.persistence.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
 import java.lang.reflect.Field;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -20,6 +25,7 @@ public class AdVehicleServiceImpl implements AdVehicleService {
 
     private final AdvertisementRepository advertisementRepository;
     private final CategoryRepository categoryRepository;
+    private final UserRepository userRepository;
 
     @Override
     public List<String> getBrandNamesByCategory(String category) {
@@ -54,5 +60,14 @@ public class AdVehicleServiceImpl implements AdVehicleService {
         }
         return sortParam;
     }
-
+    @Override
+    public Map<Integer, String> getSavedAdvertisementTitlesByUsername(String username) {
+        Optional<UserEntity> userEntity = userRepository.findByUsername(username);
+        if (userEntity.isEmpty()) {
+            return new HashMap<>();
+        }
+        return userEntity.get().getSavedAds().stream()
+            .map(advertisementEntity -> Map.entry(advertisementEntity.getId(), advertisementEntity.getTitle()))
+            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    }
 }

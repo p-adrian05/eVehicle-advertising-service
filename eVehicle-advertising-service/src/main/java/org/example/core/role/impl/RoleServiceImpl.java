@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -41,10 +42,10 @@ public class RoleServiceImpl implements RoleService, UserCreateObserver {
     }
 
     @Override
-    public void deleteRole(String role) throws RoleAlreadyExistsException {
+    public void deleteRole(String role) throws UnknownRoleException {
         Optional<RoleEntity> roleEntity = roleRepository.findRoleEntityByRoleName(role);
         if(roleEntity.isEmpty()){
-            throw new RoleAlreadyExistsException(String.format("Role not exists for deleting %s",role));
+            throw new UnknownRoleException(String.format("Role not exists for deleting %s",role));
         }
         roleRepository.delete(roleEntity.get());
     }
@@ -65,6 +66,15 @@ public class RoleServiceImpl implements RoleService, UserCreateObserver {
         modifyRole(role,userEntity::removeRole);
         userRepository.save(userEntity);
     }
+
+    @Override
+    public List<String> getRolesByUsername(String username) {
+        Optional<UserEntity> userEntity = userRepository.findByUsername(username);
+        return userEntity
+            .map(entity -> entity.getRoles().stream().map(RoleEntity::getRoleName).collect(Collectors.toList()))
+            .orElseGet(LinkedList::new);
+    }
+
     @Override
     public List<String> readRoles(){
        return roleRepository.findAll().stream().map(RoleEntity::getRoleName).collect(Collectors.toList());

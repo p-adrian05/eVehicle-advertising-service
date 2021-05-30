@@ -70,22 +70,16 @@ public class AdImageStorageServiceImpl implements AdImageStorageService {
         }
         return imagePaths;
     }
-
     @Override
-    public Path getRootPath() {
-        return rootLocation;
-    }
-
-    @Override
-    public void deletePaths(Set<Path> paths) {
-        paths.forEach(storageService::deleteByPath);
+    public void deleteImageByPath(String path) {
+       storageService.deleteByPath(this.rootLocation.resolve(path));
     }
 
     @Override
     public Resource loadAdImage(String path) {
         try{
             Resource resource;
-            Path file = Path.of("images").resolve(path);
+            Path file = this.rootLocation.resolve(path);
             resource = new UrlResource(file.toUri());
             if(resource.exists() || resource.isReadable()){
                 return resource;

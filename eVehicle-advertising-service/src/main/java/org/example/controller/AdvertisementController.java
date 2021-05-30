@@ -118,7 +118,7 @@ public class AdvertisementController {
     @GetMapping(Mappings.ADVERTISEMENTS + "/{username}/" + Mappings.SAVED)
     @CrossOrigin
     public Collection<SavedAdDto> getSavedAdvertisementsByUsername(@PathVariable("username") String username) {
-        return advertisementService.getSavedAdvertisementTitlesByUsername(username).entrySet().stream()
+        return adVehicleService.getSavedAdvertisementTitlesByUsername(username).entrySet().stream()
             .map(entry -> SavedAdDto.builder()
                 .adId(entry.getKey()).title(entry.getValue()).build()).collect(Collectors.toList());
     }

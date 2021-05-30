@@ -5,16 +5,13 @@ import org.springframework.core.io.Resource;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.nio.file.Path;
-import java.util.Map;
 import java.util.Set;
 
 public interface AdImageStorageService {
 
     Set<Path> store(MultipartFile[] imageFiles) throws FileUploadException;
 
-    Path getRootPath();
-
-    void deletePaths(Set<Path> paths);
+    void deleteImageByPath(String path);
 
     Resource loadAdImage(String path);
 }

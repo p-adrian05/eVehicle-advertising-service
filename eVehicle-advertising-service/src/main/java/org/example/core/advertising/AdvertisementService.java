@@ -16,7 +16,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.Map;
 import java.util.Optional;
 
 public interface AdvertisementService {
@@ -34,8 +33,6 @@ public interface AdvertisementService {
     Optional<AdDetailsDto> getAdDetailsById(int id);
 
     Slice<AdLabelDto> getAdvertisements(AdvertisementQueryParams params, Pageable pageable);
-
-    Map<Integer, String> getSavedAdvertisementTitlesByUsername(String username);
 
     Page<AdLabelDto> getAdvertisementsByUsername(String username, Pageable pageable, AdState state);
 
