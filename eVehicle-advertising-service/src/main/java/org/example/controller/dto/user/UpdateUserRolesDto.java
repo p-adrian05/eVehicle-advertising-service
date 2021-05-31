@@ -2,7 +2,7 @@ package org.example.controller.dto.user;
 
 import lombok.Builder;
 import lombok.Data;
-import lombok.Getter;
+import org.example.core.role.model.Role;
 
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
@@ -17,6 +17,6 @@ public class UpdateUserRolesDto {
     private String username;
     @NotNull(message = "roles: cannot be null")
     @NotEmpty(message = "roles: cannot be empty")
-    private String role;
+    private Role role;
 
 }

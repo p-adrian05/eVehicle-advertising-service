@@ -1,6 +1,7 @@
 package org.example.core.security;
 
 
+import org.example.core.role.model.Role;
 import org.example.core.user.model.AuthUserDto;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -21,9 +22,9 @@ public class UserDetailsImpl implements UserDetails {
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         Collection<GrantedAuthority> authorities = new HashSet<>();
-        Set<String> roles = new HashSet<>(user.getRoles());
-        for(String role: roles){
-            authorities.add(new SimpleGrantedAuthority(role));
+        Set<Role> roles = new HashSet<>(user.getRoles());
+        for(Role role: roles){
+            authorities.add(new SimpleGrantedAuthority(role.name()));
         }
         return authorities;
     }

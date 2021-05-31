@@ -5,6 +5,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.example.core.image.model.ImageDto;
+import org.example.core.role.model.Role;
 
 import java.sql.Timestamp;
 import java.util.List;
@@ -28,5 +29,5 @@ public class UserDto {
 
     private final ImageDto profileImage;
 
-    private final List<String> roles;
+    private final List<Role> roles;
 }

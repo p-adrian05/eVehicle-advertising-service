@@ -39,13 +39,11 @@ public class SecurityConfigurer extends WebSecurityConfigurerAdapter {
                 .antMatchers(HttpMethod.GET,"/api/user/*/roles").hasAnyAuthority("ADMIN")
                 .antMatchers(HttpMethod.POST,"/api/authenticate").permitAll()
                 .antMatchers(HttpMethod.GET,"/api/authenticate/activate/*").permitAll()
-                .antMatchers(HttpMethod.POST,"/api/user").permitAll()
-                .antMatchers(HttpMethod.GET,"/api/advertisement/**").permitAll()
-                .antMatchers(HttpMethod.GET,"/api/advertisements").permitAll()
+                .antMatchers(HttpMethod.POST,"/api/user","/api/user/**").permitAll()
+                .antMatchers(HttpMethod.GET,"/api/advertisement/**","/api/advertisements").permitAll()
+                .antMatchers(HttpMethod.GET,"/api/roles","/api/user/*/roles").permitAll()
                 .antMatchers(HttpMethod.GET,"/api/img/**").permitAll()
-                .antMatchers(HttpMethod.GET,"/api/rates").permitAll()
-                .antMatchers(HttpMethod.GET,"/api/rates/count/*").permitAll()
-                .antMatchers(HttpMethod.GET,"/api/user/**").permitAll()
+                .antMatchers(HttpMethod.GET,"/api/rates","/api/rates/count/*").permitAll()
                 .anyRequest().authenticated()
         .and().sessionManagement()
         .sessionCreationPolicy(SessionCreationPolicy.STATELESS);
@@ -54,7 +52,6 @@ public class SecurityConfigurer extends WebSecurityConfigurerAdapter {
     }
     @Override
     public void configure(WebSecurity web) throws Exception {
-        // Allow swagger to be accessed without authentication
         web.ignoring().antMatchers("/v2/api-docs")//
                 .antMatchers("/swagger-resources/**")//
                 .antMatchers("/swagger-ui.html")//

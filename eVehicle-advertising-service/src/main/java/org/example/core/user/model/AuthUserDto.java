@@ -4,6 +4,7 @@ import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import org.example.core.role.model.Role;
 
 import java.util.List;
 
@@ -22,5 +23,5 @@ public class AuthUserDto {
 
     private final boolean enabled;
 
-    private final List<String> roles;
+    private final List<Role> roles;
 }

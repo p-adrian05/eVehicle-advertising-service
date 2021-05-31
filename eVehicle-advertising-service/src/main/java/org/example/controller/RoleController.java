@@ -9,6 +9,7 @@ import org.example.core.role.RoleService;
 import org.example.core.role.exception.RoleAlreadyExistsException;
 import org.example.core.role.exception.RoleModificationException;
 import org.example.core.role.exception.UnknownRoleException;
+import org.example.core.role.model.Role;
 import org.example.core.user.exception.UnknownUserException;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.BindingResult;
@@ -37,11 +38,11 @@ public class RoleController {
     private final RoleService roleService;
 
     @GetMapping(Mappings.USER+"/{username}/"+Mappings.ROLES)
-    public List<String> getRolesByUsername(@PathVariable String username) {
+    public List<Role> getRolesByUsername(@PathVariable String username) {
         return roleService.getRolesByUsername(username);
     }
     @GetMapping(Mappings.ROLES)
-    public List<String> getRoles() {
+    public List<Role> getRoles() {
         return roleService.readRoles();
     }
     @PatchMapping(Mappings.USER_ROLES)
@@ -65,13 +66,13 @@ public class RoleController {
     @ResponseStatus(HttpStatus.CREATED)
     @CrossOrigin
     public void createRole(@RequestBody String role) throws RoleAlreadyExistsException {
-       roleService.createRole(role);
+       roleService.createRole(Role.valueOf(role));
     }
     @DeleteMapping(Mappings.ROLE)
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @CrossOrigin
     public void deleteRole(@RequestBody String role) throws UnknownRoleException {
-        roleService.deleteRole(role);
+        roleService.deleteRole(Role.valueOf(role));
     }
 
 }

@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+import org.example.core.role.model.Role;
 import org.example.core.user.persistence.entity.UserEntity;
 import org.hibernate.annotations.NaturalId;
 import org.hibernate.annotations.NaturalIdCache;
@@ -13,6 +14,8 @@ import org.hibernate.annotations.NaturalIdCache;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -37,7 +40,8 @@ public class RoleEntity {
 
     @Column(name = "Role_Name")
     @NaturalId
-    private String roleName;
+    @Enumerated(EnumType.STRING)
+    private Role roleName;
 
     @ManyToMany(fetch = FetchType.LAZY,mappedBy = "roles",cascade = CascadeType.REMOVE)
     @ToString.Exclude

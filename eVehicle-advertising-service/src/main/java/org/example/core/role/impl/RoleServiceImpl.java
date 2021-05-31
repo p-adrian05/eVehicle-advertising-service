@@ -6,6 +6,7 @@ import org.example.core.role.RoleService;
 import org.example.core.role.exception.RoleAlreadyExistsException;
 import org.example.core.role.exception.RoleModificationException;
 import org.example.core.role.exception.UnknownRoleException;
+import org.example.core.role.model.Role;
 import org.example.core.role.persistence.entity.RoleEntity;
 import org.example.core.role.persistence.repository.RoleRepository;
 import org.example.core.user.UserCreateObserver;
@@ -30,11 +31,8 @@ public class RoleServiceImpl implements RoleService, UserCreateObserver {
     private final RoleRepository roleRepository;
     private final UserRepository userRepository;
 
-    @Value("${user.default-role:USER}")
-    private String DEFAULT_ROLE;
-
     @Override
-    public void createRole(String role) throws RoleAlreadyExistsException {
+    public void createRole(Role role) throws RoleAlreadyExistsException {
         if(roleRepository.existsByRoleName(role)){
             throw new RoleAlreadyExistsException(String.format("Role already exists for creating %s",role));
         }
@@ -42,7 +40,7 @@ public class RoleServiceImpl implements RoleService, UserCreateObserver {
     }
 
     @Override
-    public void deleteRole(String role) throws UnknownRoleException {
+    public void deleteRole(Role role) throws UnknownRoleException {
         Optional<RoleEntity> roleEntity = roleRepository.findRoleEntityByRoleName(role);
         if(roleEntity.isEmpty()){
             throw new UnknownRoleException(String.format("Role not exists for deleting %s",role));
@@ -52,7 +50,7 @@ public class RoleServiceImpl implements RoleService, UserCreateObserver {
 
     @Override
     @Transactional
-    public void addRole(String username, String role) throws RoleModificationException {
+    public void addRole(String username, Role role) throws RoleModificationException {
         UserEntity userEntity = queryUserEntity(username);
         log.info("Adding role to user with username: {}",username);
         modifyRole(role,userEntity::addRole);
@@ -60,7 +58,7 @@ public class RoleServiceImpl implements RoleService, UserCreateObserver {
     }
     @Override
     @Transactional
-    public void removeRole(String username, String role) throws RoleModificationException {
+    public void removeRole(String username, Role role) throws RoleModificationException {
         UserEntity userEntity = queryUserEntity(username);
         log.info("Removing role from user with username: {}",username);
         modifyRole(role,userEntity::removeRole);
@@ -68,7 +66,7 @@ public class RoleServiceImpl implements RoleService, UserCreateObserver {
     }
 
     @Override
-    public List<String> getRolesByUsername(String username) {
+    public List<Role> getRolesByUsername(String username) {
         Optional<UserEntity> userEntity = userRepository.findByUsername(username);
         return userEntity
             .map(entity -> entity.getRoles().stream().map(RoleEntity::getRoleName).collect(Collectors.toList()))
@@ -76,10 +74,10 @@ public class RoleServiceImpl implements RoleService, UserCreateObserver {
     }
 
     @Override
-    public List<String> readRoles(){
+    public List<Role> readRoles(){
        return roleRepository.findAll().stream().map(RoleEntity::getRoleName).collect(Collectors.toList());
     }
-    private void modifyRole(String role, Consumer<RoleEntity> roleModifierConsumer)
+    private void modifyRole(Role role, Consumer<RoleEntity> roleModifierConsumer)
         throws RoleModificationException {
         Optional<RoleEntity> roleEntity = roleRepository.findRoleEntityByRoleName(role);
         if(roleEntity.isEmpty()){
@@ -101,9 +99,9 @@ public class RoleServiceImpl implements RoleService, UserCreateObserver {
     }
 
     private RoleEntity queryDefaultRole(){
-        Optional<RoleEntity> roleEntity = roleRepository.findRoleEntityByRoleName(DEFAULT_ROLE);
+        Optional<RoleEntity> roleEntity = roleRepository.findRoleEntityByRoleName(Role.defaultRole());
         if(roleEntity.isEmpty()){
-            return roleRepository.save(RoleEntity.builder().roleName(DEFAULT_ROLE).build());
+            return roleRepository.save(RoleEntity.builder().roleName(Role.defaultRole()).build());
         }
         return roleEntity.get();
     }
