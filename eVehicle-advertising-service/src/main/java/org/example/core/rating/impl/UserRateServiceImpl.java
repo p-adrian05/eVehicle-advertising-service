@@ -30,6 +30,7 @@ import java.sql.Timestamp;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -48,7 +49,13 @@ public class UserRateServiceImpl implements UserRateService {
     public void createRate(UserRateDto userRate)
         throws UnknownUserException, UnknownAdvertisementException, UserRateAlreadyExistsException,
         UnknownUserRateException {
-
+        Objects.requireNonNull(userRate, "UserRateDto cannot be null for creating rate");
+        Objects.requireNonNull(userRate.getRatedUsername(), "Rated username cannot be null for creating rate");
+        Objects.requireNonNull(userRate.getRatingUsername(), "Rating username cannot be null for creating rate");
+        Objects.requireNonNull(userRate.getRateState(), "Rate state cannot be null for creating rate");
+        Objects.requireNonNull(userRate.getRatedState(), "Rated state cannot be null for creating rate");
+        Objects.requireNonNull(userRate.getDescription(), "Rate description cannot be null for creating rate");
+        Objects.requireNonNull(userRate.getAdvertisement(), "AdvertisementDto cannot be null for creating rate");
         UserEntity ratingUserEntity = queryUserEntity(userRate.getRatingUsername());
         UserEntity ratedUserEntity = queryUserEntity(userRate.getRatedUsername());
         AdvertisementEntity advertisementEntity = queryAdEntity(userRate.getAdvertisement().getId());
@@ -87,6 +94,9 @@ public class UserRateServiceImpl implements UserRateService {
 
     private boolean isValidAdCreator(AdvertisementEntity advertisementEntity, String creator)
         throws UnknownUserException {
+        Objects.requireNonNull(advertisementEntity, "AdvertisementEntity cannot be null");
+        Objects.requireNonNull(advertisementEntity.getCreator(), "AdvertisementEntity creator cannot be null");
+        Objects.requireNonNull(creator, "Creator name cannot be null");
         if (!advertisementEntity.getCreator().getUsername().equals(creator)) {
             throw new UnknownUserException(
                 String.format("Unknown user found for Advertisement: username : %s, ad id: %s",
@@ -96,6 +106,7 @@ public class UserRateServiceImpl implements UserRateService {
     }
 
     private boolean checkRateNotExistsToAdByUsername(int adId, String username) throws UserRateAlreadyExistsException {
+        Objects.requireNonNull(username, "Username cannot be null");
         if (userRateRepository
             .existsByRatingUserUsernameAndAdvertisement_Id(username, adId)) {
             throw new UserRateAlreadyExistsException(
@@ -106,6 +117,8 @@ public class UserRateServiceImpl implements UserRateService {
     }
 
     private RateEntity createUserRate(String description, RateState rateState) {
+        Objects.requireNonNull(description, "Rate description cannot be null for creating rate");
+        Objects.requireNonNull(rateState, "Rate state cannot be null for creating rate");
         RateEntity newRateEntity = RateEntity.builder()
             .created(new Timestamp(new Date().getTime()))
             .description(description)
@@ -117,6 +130,8 @@ public class UserRateServiceImpl implements UserRateService {
 
     private void activateUserRate(String code, String ratedUsername, String ratingUsername)
         throws UnknownUserRateException {
+        Objects.requireNonNull(ratedUsername, "Rated username cannot be null for activate rate");
+        Objects.requireNonNull(ratingUsername, "Rating username cannot be null for activate rate");
         Optional<UserRateEntity> userRateToActivate =
             userRateRepository.findUserRateEntityByActivationCode(code);
         if (userRateToActivate.isEmpty()) {
@@ -143,12 +158,15 @@ public class UserRateServiceImpl implements UserRateService {
 
     @Override
     public Page<UserRateDto> getRates(RateQueryParams rateQueryParams, Pageable pageable) {
+        Objects.requireNonNull(rateQueryParams, "RateQueryParams cannot be null");
+        Objects.requireNonNull(pageable, "Pageable cannot be null");
         return userRateRepository.findByRatedUser_UsernameAndStateOrderByRate(rateQueryParams, pageable)
             .map(this::convertUserRateEntityToModel);
     }
 
     @Override
     public Map<RateState, Integer> getRatesCountByUsernameAndRateState(String username) {
+        Objects.requireNonNull(username, "Username cannot be null");
         int positiveCount = userRateRepository
             .countByRatedUser_UsernameAndRate_StateAndStatus(username, RateState.POSITIVE, RateStatus.CLOSED);
         int negativeCount = userRateRepository
@@ -160,6 +178,7 @@ public class UserRateServiceImpl implements UserRateService {
     }
 
     private UserEntity queryUserEntity(String username) throws UnknownUserException {
+        Objects.requireNonNull(username, "Username cannot be null");
         Optional<UserEntity> userEntity = userRepository.findByUsername(username);
         if (userEntity.isEmpty()) {
             throw new UnknownUserException(String.format("User not found: %s", username));
@@ -177,6 +196,7 @@ public class UserRateServiceImpl implements UserRateService {
     }
 
     private UserRateDto convertUserRateEntityToModel(UserRateEntity userRateEntity) {
+        Objects.requireNonNull(userRateEntity, "UserRateEntity cannot be null for converting");
         return UserRateDto.builder()
             .ratingUsername(userRateEntity.getRatingUser().getUsername())
             .ratedUsername(userRateEntity.getRatedUser().getUsername())

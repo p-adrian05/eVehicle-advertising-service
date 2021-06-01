@@ -14,6 +14,7 @@ import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.Objects;
 
 @Service
 @Slf4j
@@ -21,6 +22,9 @@ public class StorageServiceImpl implements StorageService {
 
     @Override
     public Path store(MultipartFile file,Path folderPath,String fileName) throws FileUploadException {
+        Objects.requireNonNull(file, "MultipartFile cannot be null for storing");
+        Objects.requireNonNull(folderPath, "FolderPath cannot be null for storing");
+        Objects.requireNonNull(fileName, "Filename cannot be null for storing");
         Path path = folderPath.resolve(fileName);
         try {
             Files.createDirectories(folderPath);
@@ -29,11 +33,13 @@ public class StorageServiceImpl implements StorageService {
         } catch (IOException e) {
             e.printStackTrace();
         }
-       throw new FileUploadException(String.format("Failed to upload file: %s",file.toString()));
+       throw new FileUploadException(String.format("Failed to upload file: %s", file));
     }
 
     @Override
     public Resource loadAsResource(String filename,String path) {
+        Objects.requireNonNull(path, "Path cannot be null for loading resource");
+        Objects.requireNonNull(filename, "Filename cannot be null for loading resource");
         try{
             Resource resource;
             Path file = Path.of(path).resolve(filename);
@@ -51,6 +57,7 @@ public class StorageServiceImpl implements StorageService {
 
     @Override
     public void deleteByPath(Path path) {
+        Objects.requireNonNull(path, "Path cannot be null for deleting");
         try {
             Files.delete(path);
         } catch (IOException e) {

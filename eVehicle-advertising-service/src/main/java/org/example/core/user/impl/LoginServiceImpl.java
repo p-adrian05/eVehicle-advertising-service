@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import javax.security.auth.message.AuthException;
 import java.sql.Timestamp;
 import java.util.Date;
+import java.util.Objects;
 import java.util.Optional;
 
 @RequiredArgsConstructor
@@ -28,6 +29,8 @@ public class LoginServiceImpl implements LoginService {
 
     @Override
     public String login(String username, String password) throws AuthException {
+        Objects.requireNonNull(username, "Username cannot be null for login");
+        Objects.requireNonNull(password, "Password cannot be null for login");
         Optional<UserEntity> user = userRepository.findByUsername(username);
         if (user.isEmpty()) {
             throw new AuthException("Incorrect username or password");

@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -37,11 +38,14 @@ public class AdUtilServiceImpl implements AdUtilService {
 
     @Override
     public List<String> getBrandNamesByCategory(String category) {
+        Objects.requireNonNull(category, "Category name cannot be null");
         return advertisementRepository.findBrandNamesByCategory(category);
     }
 
     @Override
     public List<String> getCarTypesByBrandName(String category, String brandName) {
+        Objects.requireNonNull(brandName, "Brand name cannot be null");
+        Objects.requireNonNull(category, "Category name cannot be null");
         return advertisementRepository.findCarTypesByCategoryAndBrand(category, brandName);
     }
 
@@ -68,8 +72,10 @@ public class AdUtilServiceImpl implements AdUtilService {
         }
         return sortParam;
     }
+
     @Override
     public Map<Integer, String> getSavedAdvertisementTitlesByUsername(String username) {
+        Objects.requireNonNull(username, "Username cannot be null");
         Optional<UserEntity> userEntity = userRepository.findByUsername(username);
         if (userEntity.isEmpty()) {
             return new HashMap<>();
@@ -83,43 +89,50 @@ public class AdUtilServiceImpl implements AdUtilService {
     @Transactional
     public void removeSaveAd(String username, int adId) throws UnknownUserException, UnknownAdvertisementException,
         MaximumSavedAdsReachedException {
-        UserEntity userEntity =  getUserByName(username);
-        log.info("Removing saved Ad from user with username: {}",username);
-        modifySaveAds(userEntity,adId,userEntity::removeSavedAd);
+        Objects.requireNonNull(username, "Username cannot be null");
+        UserEntity userEntity = getUserByName(username);
+        log.info("Removing saved Ad from user with username: {}", username);
+        modifySaveAds(userEntity, adId, userEntity::removeSavedAd);
     }
 
     @Override
     @Transactional
-    public void addSaveAd(String username, int adId) throws UnknownUserException, UnknownAdvertisementException, MaximumSavedAdsReachedException {
-        UserEntity userEntity =  getUserByName(username);
-        log.info("Removing saved Ad from user with username: {}",username);
-        modifySaveAds(userEntity,adId,userEntity::addSavedAd);
+    public void addSaveAd(String username, int adId)
+        throws UnknownUserException, UnknownAdvertisementException, MaximumSavedAdsReachedException {
+        Objects.requireNonNull(username, "Username cannot be null");
+        UserEntity userEntity = getUserByName(username);
+        log.info("Removing saved Ad from user with username: {}", username);
+        modifySaveAds(userEntity, adId, userEntity::addSavedAd);
     }
 
     protected void modifySaveAds(UserEntity userEntity, int adId, Consumer<AdvertisementEntity> saveAdsModifier) throws
         UnknownAdvertisementException, MaximumSavedAdsReachedException {
-        Optional<AdvertisementEntity> advertisementEntity =  advertisementRepository.findById(adId);
-        log.info("User saved ads: {}",userEntity.getSavedAds());
-        if(userEntity.getSavedAds().size()==15){
-            throw new MaximumSavedAdsReachedException(String.format("Maximum saved ads 15 reached for user: %s",userEntity.getUsername()));
+        Objects.requireNonNull(userEntity, "Userentity cannot be null");
+        Objects.requireNonNull(saveAdsModifier, "Saving ad consumer cannot be null");
+        Optional<AdvertisementEntity> advertisementEntity = advertisementRepository.findById(adId);
+        log.info("User saved ads: {}", userEntity.getSavedAds());
+        if (userEntity.getSavedAds().size() == 15) {
+            throw new MaximumSavedAdsReachedException(
+                String.format("Maximum saved ads 15 reached for user: %s", userEntity.getUsername()));
         }
-        if(advertisementEntity.isPresent()){
+        if (advertisementEntity.isPresent()) {
             saveAdsModifier.accept(advertisementEntity.get());
-            log.info("Modified advertisement: {}",advertisementEntity);
-            log.info("User saved ads after modification : {}",userEntity.getSavedAds());
+            log.info("Modified advertisement: {}", advertisementEntity);
+            log.info("User saved ads after modification : {}", userEntity.getSavedAds());
             userRepository.save(userEntity);
-        }else {
-            throw new UnknownAdvertisementException(String.format("No ad found %s",adId));
+        } else {
+            throw new UnknownAdvertisementException(String.format("No ad found %s", adId));
         }
 
     }
 
     private UserEntity getUserByName(String username) throws UnknownUserException {
+        Objects.requireNonNull(username, "Username cannot be null");
         Optional<UserEntity> userEntity = userRepository.findByUsername(username);
-        if(userEntity.isPresent()){
-           return userEntity.get();
-        }else{
-            throw new UnknownUserException(String.format("Unknown user: %s",username));
+        if (userEntity.isPresent()) {
+            return userEntity.get();
+        } else {
+            throw new UnknownUserException(String.format("Unknown user: %s", username));
         }
     }
 }

@@ -12,12 +12,12 @@ import org.example.core.role.persistence.repository.RoleRepository;
 import org.example.core.user.UserCreateObserver;
 import org.example.core.user.persistence.entity.UserEntity;
 import org.example.core.user.persistence.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -33,24 +33,30 @@ public class RoleServiceImpl implements RoleService, UserCreateObserver {
 
     @Override
     public void createRole(Role role) throws RoleAlreadyExistsException {
+        Objects.requireNonNull(role, "Role cannot be null for creating");
         if(roleRepository.existsByRoleName(role)){
             throw new RoleAlreadyExistsException(String.format("Role already exists for creating %s",role));
         }
         roleRepository.save(RoleEntity.builder().roleName(role).build());
+        log.info("Created role: {}",role);
     }
 
     @Override
     public void deleteRole(Role role) throws UnknownRoleException {
+        Objects.requireNonNull(role, "Role cannot be null for deleting");
         Optional<RoleEntity> roleEntity = roleRepository.findRoleEntityByRoleName(role);
         if(roleEntity.isEmpty()){
             throw new UnknownRoleException(String.format("Role not exists for deleting %s",role));
         }
         roleRepository.delete(roleEntity.get());
+        log.info("Deleted role: {}",role);
     }
 
     @Override
     @Transactional
     public void addRole(String username, Role role) throws RoleModificationException {
+        Objects.requireNonNull(role, "Role cannot be null for adding to User");
+        Objects.requireNonNull(username, "Username cannot be null");
         UserEntity userEntity = queryUserEntity(username);
         log.info("Adding role to user with username: {}",username);
         modifyRole(role,userEntity::addRole);
@@ -59,6 +65,8 @@ public class RoleServiceImpl implements RoleService, UserCreateObserver {
     @Override
     @Transactional
     public void removeRole(String username, Role role) throws RoleModificationException {
+        Objects.requireNonNull(role, "Role cannot be null for removing from User");
+        Objects.requireNonNull(username, "Username cannot be null");
         UserEntity userEntity = queryUserEntity(username);
         log.info("Removing role from user with username: {}",username);
         modifyRole(role,userEntity::removeRole);
@@ -67,6 +75,7 @@ public class RoleServiceImpl implements RoleService, UserCreateObserver {
 
     @Override
     public List<Role> getRolesByUsername(String username) {
+        Objects.requireNonNull(username, "Username cannot be null");
         Optional<UserEntity> userEntity = userRepository.findByUsername(username);
         return userEntity
             .map(entity -> entity.getRoles().stream().map(RoleEntity::getRoleName).collect(Collectors.toList()))
@@ -86,6 +95,7 @@ public class RoleServiceImpl implements RoleService, UserCreateObserver {
        roleModifierConsumer.accept(roleEntity.get());
     }
     private UserEntity queryUserEntity(String username) throws RoleModificationException {
+        Objects.requireNonNull(username, "Username cannot be null");
         Optional<UserEntity> userEntity = userRepository.findByUsername(username);
         if(userEntity.isEmpty()){
             throw new RoleModificationException(String.format("User not found %s",username));
@@ -95,6 +105,7 @@ public class RoleServiceImpl implements RoleService, UserCreateObserver {
 
     @Override
     public void handleNewUser(UserEntity userEntity) {
+        Objects.requireNonNull(userEntity, "UserEntity cannot be null");
         userEntity.setRoles(Set.of(queryDefaultRole()));
     }
 

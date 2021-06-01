@@ -37,6 +37,7 @@ import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -58,7 +59,9 @@ public class AdvertisementServiceImpl implements AdvertisementService {
     public void createAdvertisement(CreateAdDto advertisementDto, AdDetailsDto adDetailsDto,
                                     MultipartFile[] imageFiles)
         throws UnknownUserException, UnknownCategoryException, FileUploadException {
-
+        Objects.requireNonNull(advertisementDto, "AdvertisementDto cannot be null during creation");
+        Objects.requireNonNull(adDetailsDto, "AdDetailsDto cannot be null during creation");
+        Objects.requireNonNull(imageFiles, "ImageFile array cannot be null");
         AdvertisementEntity advertisementEntity = createNewAdvertisement(advertisementDto);
         Set<Path> imagePaths = adImageStorageService.store(imageFiles);
         advertisementEntity.setImages(
@@ -97,7 +100,9 @@ public class AdvertisementServiceImpl implements AdvertisementService {
     public void updateAdvertisementWithDetails(UpdateAdvertisementDto advertisementDto, AdDetailsDto adDetails,
                                                 MultipartFile[] imageFiles)
         throws UnknownAdvertisementException, UnknownCategoryException, FileUploadException {
-
+        Objects.requireNonNull(advertisementDto, "AdvertisementDto cannot be null during update");
+        Objects.requireNonNull(adDetails, "AdDetailsDto cannot be null during update");
+        Objects.requireNonNull(imageFiles, "ImageFile array cannot be null");
         if (!advertisementRepository.existsByIdAndAndCreator_Username(advertisementDto.getId(),
             SecurityContextHolder.getContext().getAuthentication().getName())) {
             throw new AuthException("Access denied");
@@ -107,7 +112,6 @@ public class AdvertisementServiceImpl implements AdvertisementService {
         CategoryEntity categoryEntity = adUtil.queryCategory(advertisementDto.getCategory());
         TypeEntity typeEntity = adUtil.getTypeEntity(advertisementDto.getType());
         typeEntity.setBrandEntity(adUtil.getBrandEntity(advertisementDto.getBrand()));
-        log.info("Type entity for updated advertisement: {}", typeEntity);
         advertisementEntity.setCategory(categoryEntity);
         advertisementEntity.setType(typeEntity);
         advertisementEntity.setProductCondition(advertisementDto.getCondition());
@@ -115,7 +119,9 @@ public class AdvertisementServiceImpl implements AdvertisementService {
         advertisementEntity.setPrice(advertisementDto.getPrice());
         adDetailsService.updateAdDetails(adDetails);
         advertisementEntity.setImages(getUpdatedImages(advertisementEntity.getImages(),imageFiles));
+
         advertisementRepository.save(advertisementEntity);
+        log.info("Updated advertisementEntity: {}", advertisementEntity);
     }
 
 
@@ -141,6 +147,8 @@ public class AdvertisementServiceImpl implements AdvertisementService {
 
     @Override
     public Slice<AdLabelDto> getAdvertisements(AdvertisementQueryParams params, Pageable pageable) {
+        Objects.requireNonNull(params, "AdvertisementQueryParams cannot be null");
+        Objects.requireNonNull(pageable, "Pageable cannot be null");
         return advertisementRepository.findByParams(params, pageable)
             .map(adUtil::convertAdvertisementEntityToLabelDto);
     }
@@ -149,12 +157,17 @@ public class AdvertisementServiceImpl implements AdvertisementService {
 
     @Override
     public Page<AdLabelDto> getAdvertisementsByUsername(String username, Pageable pageable, AdState state) {
+        Objects.requireNonNull(username, "Username cannot be null");
+        Objects.requireNonNull(pageable, "Pageable cannot be null");
+        Objects.requireNonNull(state, "AdState cannot be null");
         return advertisementRepository.findByCreator(username, pageable, state)
             .map(adUtil::convertAdvertisementEntityToLabelDto);
     }
 
     @Override
     public void changeState(int adId, AdState stateToChange, String creatorName) throws UnknownAdvertisementException {
+        Objects.requireNonNull(creatorName, "Creator username cannot be null");
+        Objects.requireNonNull(stateToChange, "AdState cannot be null");
         if (!advertisementRepository.existsByIdAndAndCreator_Username(adId, creatorName)) {
             throw new AuthException("Access denied");
         }
@@ -178,7 +191,7 @@ public class AdvertisementServiceImpl implements AdvertisementService {
 
     private AdvertisementEntity createNewAdvertisement(CreateAdDto advertisementDto)
         throws UnknownCategoryException, UnknownUserException {
-
+        Objects.requireNonNull(advertisementDto, "CreateAdDto cannot be null during creation");
         UserEntity userEntity = adUtil.queryUserEntity(advertisementDto.getCreator());
         CategoryEntity categoryEntity = adUtil.queryCategory(advertisementDto.getCategory());
         TypeEntity typeEntity = adUtil.getTypeEntity(advertisementDto.getType());

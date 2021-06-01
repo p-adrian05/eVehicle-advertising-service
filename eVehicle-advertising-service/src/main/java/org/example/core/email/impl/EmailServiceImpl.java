@@ -14,6 +14,8 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
+import java.util.Objects;
+
 
 @Slf4j
 @Service
@@ -33,6 +35,9 @@ public class EmailServiceImpl implements EmailService, UserAfterCreatedObserver 
 
     @Override
     public void sendMessage(String email,String username,String activationCode) {
+        Objects.requireNonNull(email, "Email cannot be null during sending email process");
+        Objects.requireNonNull(username, "Username cannot be null during sending email process");
+        Objects.requireNonNull(activationCode, "ActivationCode cannot be null during sending email process");
         SimpleMailMessage mailMessage;
         try{
             mailMessage = new SimpleMailMessage();
@@ -51,6 +56,7 @@ public class EmailServiceImpl implements EmailService, UserAfterCreatedObserver 
 
     @Override
     public void handleCreatedUser(CreatedUserDto createdUserDto) {
+        Objects.requireNonNull(createdUserDto, "CreatedUserDto cannot be null during sending email process");
         sendMessage(createdUserDto.getEmail(),createdUserDto.getEmail(),createdUserDto.getActivationCode());
     }
 }

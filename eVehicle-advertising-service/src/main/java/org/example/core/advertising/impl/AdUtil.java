@@ -22,6 +22,7 @@ import org.example.core.user.persistence.entity.UserEntity;
 import org.example.core.user.persistence.repository.UserRepository;
 import org.springframework.stereotype.Component;
 
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -36,6 +37,7 @@ class AdUtil {
     private final BrandRepository brandRepository;
 
     UserEntity queryUserEntity(String username) throws UnknownUserException {
+        Objects.requireNonNull(username, "Username cannot be null for user query");
         Optional<UserEntity> userEntity = userRepository.findByUsername(username);
         if (userEntity.isEmpty()) {
             throw new UnknownUserException(String.format("User not found: %s", username));
@@ -45,6 +47,7 @@ class AdUtil {
     }
 
     CategoryEntity queryCategory(String categoryName) throws UnknownCategoryException {
+        Objects.requireNonNull(categoryName, "Category name cannot be null for category query");
         Optional<CategoryEntity> categoryEntity = categoryRepository.findByName(categoryName);
         if (categoryEntity.isEmpty()) {
             throw new UnknownCategoryException(String.format("Category not found: %s", categoryName));
@@ -54,6 +57,7 @@ class AdUtil {
     }
 
     TypeEntity getTypeEntity(String type) {
+        Objects.requireNonNull(type, "Type name cannot be null for type query");
         Optional<TypeEntity> typeEntity = typeRepository.findByName(type);
         if (typeEntity.isPresent()) {
             log.info("Created typeEntity by name : {},{}", type, typeEntity.get());
@@ -66,6 +70,7 @@ class AdUtil {
     }
 
     BrandEntity getBrandEntity(String brand) {
+        Objects.requireNonNull(brand, "Brand name cannot be null for brand query");
         Optional<BrandEntity> brandEntity = brandRepository.findById(brand);
         if (brandEntity.isPresent()) {
             log.info("brandEntity by name : {},{}", brand, brandEntity.get());
@@ -78,6 +83,7 @@ class AdUtil {
     }
 
     AdDetailsEntity convertAdDetailsDtoToEntity(AdDetailsDto adDetailsDto) {
+        Objects.requireNonNull(adDetailsDto, "AdDetailsDto cannot be null during converting");
         return AdDetailsEntity.builder()
             .adId(adDetailsDto.getAdId())
             .maxSpeed(adDetailsDto.getMaxSpeed())
@@ -90,6 +96,7 @@ class AdUtil {
     }
 
     BasicAdDetailsEntity convertAdDetailsDtoToBasicEntity(AdDetailsDto adDetailsDto) {
+        Objects.requireNonNull(adDetailsDto, "AdDetailsDto cannot be null during converting");
         return BasicAdDetailsEntity.builder()
             .adId(adDetailsDto.getAdId())
             .performance(adDetailsDto.getPerformance())
@@ -103,6 +110,7 @@ class AdUtil {
     }
 
     AdLabelDto convertAdvertisementEntityToLabelDto(AdvertisementEntity advertisementEntity) {
+        Objects.requireNonNull(advertisementEntity, "AdvertisementEntity cannot be null during converting");
         return AdLabelDto.builder()
             .id(advertisementEntity.getId())
             .price(advertisementEntity.getPrice())
@@ -119,6 +127,7 @@ class AdUtil {
     }
 
     BasicAdDetails convertBasicAdDetailsEntityToModel(BasicAdDetailsEntity basicAdDetailsEntity) {
+        Objects.requireNonNull(basicAdDetailsEntity, "BasicAdDetailsEntity cannot be null during converting");
         return BasicAdDetails.builder()
             .adId(basicAdDetailsEntity.getAdId())
             .year(basicAdDetailsEntity.getYear())
@@ -132,6 +141,7 @@ class AdUtil {
     }
 
     AdvertisementDto convertAdvertisementEntityToDto(AdvertisementEntity advertisementEntity) {
+        Objects.requireNonNull(advertisementEntity, "AdvertisementEntity cannot be null during converting");
         return AdvertisementDto.builder()
             .id(advertisementEntity.getId())
             .price(advertisementEntity.getPrice())
@@ -149,6 +159,7 @@ class AdUtil {
     }
 
     AdDetailsEntity convertAdDetailsToAdDetailsEntity(AdDetailsDto adDetails) {
+        Objects.requireNonNull(adDetails, "AdDetailsDto cannot be null during converting");
         return AdDetailsEntity.builder()
             .adId(adDetails.getAdId())
             .maxSpeed(adDetails.getMaxSpeed())
@@ -161,6 +172,7 @@ class AdUtil {
     }
 
     BasicAdDetailsEntity convertAdDetailsToBasicAdDetailsEntity(AdDetailsDto adDetails) {
+        Objects.requireNonNull(adDetails, "AdDetailsDto cannot be null during converting");
         return BasicAdDetailsEntity.builder()
             .adId(adDetails.getAdId())
             .performance(adDetails.getPerformance())

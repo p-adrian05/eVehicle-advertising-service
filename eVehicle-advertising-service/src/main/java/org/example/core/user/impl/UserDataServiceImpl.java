@@ -15,6 +15,7 @@ import org.example.core.user.persistence.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -27,12 +28,15 @@ public class UserDataServiceImpl implements UserDataService, UserAfterCreatedObs
 
     @Override
     public Optional<UserDataDto> getUserData(String username) {
+        Objects.requireNonNull(username, "Username cannot be null");
         return convertUserDataEntityToDto(userDataRepository.findUserDataEntityByUserEntityUsername(username));
     }
 
     @Override
     @Transactional
     public void updateUserData(@NonNull UserDataDto userData) throws UnknownUserException {
+        Objects.requireNonNull(userData, "UserDataDto cannot be null for updating");
+        Objects.requireNonNull(userData.getUsername(), "Username cannot be null for updating user data");
         UserDataEntity userDataEntity = queryUserData(userData.getUsername());
         userDataEntity.setCity(userData.getCity());
         userDataEntity.setFullName(userData.getFullName());
@@ -42,6 +46,7 @@ public class UserDataServiceImpl implements UserDataService, UserAfterCreatedObs
         log.info("Updated user data: {}",userDataEntity);
     }
     private UserDataDto convertUserDataEntityToUserDataDto(UserDataEntity userDataEntity){
+        Objects.requireNonNull(userDataEntity, "UserDataEntity cannot be null for converting");
         return UserDataDto.builder()
             .city(userDataEntity.getCity())
             .fullName(userDataEntity.getFullName())
@@ -53,6 +58,7 @@ public class UserDataServiceImpl implements UserDataService, UserAfterCreatedObs
         return userDataEntity.map(this::convertUserDataEntityToUserDataDto);
     }
     private UserDataEntity queryUserData(String username) throws UnknownUserException {
+        Objects.requireNonNull(username, "Username cannot be null for query");
         Optional<UserDataEntity> userDataEntity = userDataRepository.findUserDataEntityByUserEntityUsername(username);
         if(userDataEntity.isEmpty()){
             throw new UnknownUserException(String.format("User not found: %s",username));
@@ -63,6 +69,8 @@ public class UserDataServiceImpl implements UserDataService, UserAfterCreatedObs
 
     @Override
     public void handleCreatedUser(CreatedUserDto createdUserDto) {
+        Objects.requireNonNull(createdUserDto, "CreatedUserDto cannot be null");
+        Objects.requireNonNull(createdUserDto.getUserId(), "User id  cannot be null");
         UserDataEntity userDataEntity = new UserDataEntity();
         Optional<UserEntity> userEntity = userRepository.findById(createdUserDto.getUserId());
         if (userEntity.isPresent()) {

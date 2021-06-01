@@ -19,6 +19,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
@@ -60,6 +61,7 @@ public class AdImageStorageServiceImpl implements AdImageStorageService {
 
     @Override
     public Set<Path> store(MultipartFile[] imageFiles) throws FileUploadException {
+        Objects.requireNonNull(imageFiles, "ImageFile array cannot be null");
         Path folderPath = this.rootLocation.resolve(generateFolderName());
         Set<Path> imagePaths = new HashSet<>();
         String imageName;
@@ -72,11 +74,13 @@ public class AdImageStorageServiceImpl implements AdImageStorageService {
     }
     @Override
     public void deleteImageByPath(String path) {
+        Objects.requireNonNull(path, "Path cannot be null for deleting");
        storageService.deleteByPath(this.rootLocation.resolve(path));
     }
 
     @Override
     public Resource loadAdImage(String path) {
+        Objects.requireNonNull(path, "Path cannot be null for loading resource");
         try{
             Resource resource;
             Path file = this.rootLocation.resolve(path);
@@ -92,12 +96,11 @@ public class AdImageStorageServiceImpl implements AdImageStorageService {
 
     }
     private String generateAdImageName(String extension) {
-        StringBuilder name = new StringBuilder();
-        name.append("ad");
-        name.append(UUID.randomUUID());
-        name.append(".");
-        name.append(extension);
-        return name.toString();
+        Objects.requireNonNull(extension, "Extension cannot be null generating image name");
+        return "ad" +
+            UUID.randomUUID() +
+            "." +
+            extension;
     }
 
 

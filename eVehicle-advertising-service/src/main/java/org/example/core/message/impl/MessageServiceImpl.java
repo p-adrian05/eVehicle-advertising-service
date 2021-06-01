@@ -27,6 +27,7 @@ import java.util.Date;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -41,6 +42,11 @@ public class MessageServiceImpl implements MessageService {
 
     @Override
     public void createMessage(MessageDto messageDto) throws UnknownUserException {
+        Objects.requireNonNull(messageDto, "MessageDto cannot be null for crating message");
+        Objects
+            .requireNonNull(messageDto.getReceiverUsername(), "Receiver username cannot be null for creating message");
+        Objects.requireNonNull(messageDto.getSenderUserName(), "Sender username cannot be null for creating message");
+        Objects.requireNonNull(messageDto.getContent(), "Message content cannot be null for creating message");
         UserEntity senderUser = queryUserEntity(messageDto.getSenderUserName());
         log.info("Creating nem message, sender user: {}", senderUser);
         UserEntity receiverUserEntity = queryUserEntity(messageDto.getReceiverUsername());
@@ -65,17 +71,22 @@ public class MessageServiceImpl implements MessageService {
     @Override
     public void deleteMessage(MessageDto messageDto)
         throws DeleteMessageException, UnknownMessageException {
+        Objects.requireNonNull(messageDto, "MessageDto cannot be null for deleting message");
+        Objects
+            .requireNonNull(messageDto.getReceiverUsername(), "Receiver username cannot be null for deleting message");
+        Objects.requireNonNull(messageDto.getSenderUserName(), "Sender username cannot be null for deleting message");
         UserMessageEntity userMessageEntity =
             queryUserMessage(messageDto.getId(), messageDto.getReceiverUsername(), messageDto.getSenderUserName());
         if (!userMessageEntity.isUnread()) {
             throw new DeleteMessageException("Message is already have read, cannot delete");
         }
         userMessageRepository.delete(userMessageEntity);
+        log.info("Deleted user message: {}",userMessageEntity);
     }
 
     @Override
     public void updateMessage(int messageId, String content) throws UpdateMessageException {
-        if (content != null) {
+        Objects.requireNonNull(content, "Message content cannot be null for updating message");
             if (userMessageRepository.countDistinctByUnreadIsFalseAndMessage_Id(messageId) != 0) {
                 throw new UpdateMessageException("Message is already have read, cannot update");
             }
@@ -87,20 +98,27 @@ public class MessageServiceImpl implements MessageService {
             } else {
                 throw new UpdateMessageException("Message not exists");
             }
-        }
     }
 
     public void readMessage(int messageId, String receiverUsername, String senderUsername)
         throws UnknownMessageException {
+        Objects
+            .requireNonNull(receiverUsername, "Receiver username cannot be null for reading message");
+        Objects.requireNonNull(senderUsername, "Sender username cannot be null for reading message");
         UserMessageEntity userMessageEntity =
             queryUserMessage(messageId, receiverUsername, senderUsername);
         userMessageEntity.setUnread(false);
         userMessageRepository.save(userMessageEntity);
+        log.info("Read user message : {}", userMessageEntity);
     }
 
     @Override
     public Page<MessageDto> getMessagesByUsernames(String username1, String username2, Pageable pageable)
         throws UnknownUserException {
+        Objects
+            .requireNonNull(username1, "Username cannot be null for getting messages");
+        Objects.requireNonNull(username2, "Username cannot be null for getting messages");
+        Objects.requireNonNull(pageable, "Pageable cannot be null for getting messages");
         UserEntity userEntity1 = queryUserEntity(username1);
         UserEntity userEntity2 = queryUserEntity(username2);
         return userMessageRepository.findBySenderAndReceiverIds(userEntity1.getId(), userEntity2.getId(), pageable)
@@ -123,6 +141,8 @@ public class MessageServiceImpl implements MessageService {
     }
 
     private Set<MessagePartnerDto> getMessagePartners(String username) {
+        Objects
+            .requireNonNull(username, "Username cannot be null for getting message partners");
         Set<MessagePartnerDto> partnerNamesAndSentTime = new LinkedHashSet<>();
 
         userMessageRepository.getConversationPartnerNames(username).forEach(arr -> {
@@ -139,6 +159,9 @@ public class MessageServiceImpl implements MessageService {
 
     @Override
     public Page<MessagePartnerDto> getConversationUsernames(String username, Pageable pageable) {
+        Objects
+            .requireNonNull(username, "Username cannot be null ");
+        Objects.requireNonNull(pageable, "Pageable cannot be null");
         List<MessagePartnerDto> partnerNames = new LinkedList<>(getMessagePartners(username));
         Pair<Integer, Integer> indexFromTo = calcIndexPair(pageable, partnerNames.size());
         Page<MessagePartnerDto> pagedPartnerNames =
@@ -153,6 +176,7 @@ public class MessageServiceImpl implements MessageService {
     }
 
     private Pair<Integer, Integer> calcIndexPair(Pageable pageable, int totalSize) {
+        Objects.requireNonNull(pageable, "Pageable cannot be null");
         int fromIndex = totalSize;
         int toIndex = 0;
         if (pageable.getOffset() < totalSize) {
@@ -168,6 +192,9 @@ public class MessageServiceImpl implements MessageService {
 
     @Override
     public boolean isThereNewMessage(String receiverUsername, String senderUsername) {
+        Objects
+            .requireNonNull(receiverUsername, "Receiver username cannot be null");
+        Objects.requireNonNull(senderUsername, "Sender username cannot be null");
         return userMessageRepository
             .existsDistinctByReceiverUser_UsernameAndSenderUser_UsernameAndUnreadIsTrue(receiverUsername,
                 senderUsername);
@@ -175,10 +202,12 @@ public class MessageServiceImpl implements MessageService {
 
     @Override
     public int newMessagesCount(String username) {
+        Objects.requireNonNull(username, "Username cannot be null");
         return userMessageRepository.countByReceiverUserUsernameAndUnreadIsTrue(username);
     }
 
     private UserEntity queryUserEntity(String username) throws UnknownUserException {
+        Objects.requireNonNull(username, "Username cannot be null");
         Optional<UserEntity> userEntity = userRepository.findByUsername(username);
         if (userEntity.isEmpty()) {
             throw new UnknownUserException(String.format("User not found: %s", username));
@@ -188,6 +217,9 @@ public class MessageServiceImpl implements MessageService {
 
     private UserMessageEntity queryUserMessage(int messageId, String receiverUsername, String senderUsername)
         throws UnknownMessageException {
+        Objects
+            .requireNonNull(receiverUsername, "Receiver username cannot be null");
+        Objects.requireNonNull(senderUsername, "Sender username cannot be null");
         Optional<UserMessageEntity> userMessageEntity = userMessageRepository
             .findByMessage_IdAndReceiverUser_UsernameAndAndSenderUser_Username(messageId, receiverUsername,
                 senderUsername);

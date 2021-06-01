@@ -15,6 +15,7 @@ import java.nio.file.Path;
 import java.sql.Timestamp;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -30,6 +31,7 @@ public class ImageServiceImpl implements ImageService, UserCreateObserver {
     @Override
     @Transactional
     public void createImage(String path) {
+        Objects.requireNonNull(path, "Path cannot be null for creating Image process");
         if (!imageRepository.existsByPath(path)) {
             imageRepository.save(ImageEntity.builder()
                 .path(path)
@@ -42,6 +44,7 @@ public class ImageServiceImpl implements ImageService, UserCreateObserver {
     @Override
     @Transactional
     public Set<ImageEntity> createImageEntities(Set<Path> paths) {
+        Objects.requireNonNull(paths, "Paths cannot be null for creating Image entities process");
         Set<ImageEntity> imageEntities = new HashSet<>();
         Optional<ImageEntity> imageEntity;
 
@@ -64,6 +67,7 @@ public class ImageServiceImpl implements ImageService, UserCreateObserver {
     @Override
     @Transactional
     public void deleteImage(String path) {
+        Objects.requireNonNull(path, "Path cannot be null for deleting Image process");
         Optional<ImageEntity> imageEntity = imageRepository.findByPath(path);
         imageRepository.delete(imageEntity.orElseThrow(() -> new IllegalArgumentException("Image path not exits")));
     }
@@ -75,6 +79,7 @@ public class ImageServiceImpl implements ImageService, UserCreateObserver {
 
     @Override
     public void handleNewUser(UserEntity userEntity) {
+        Objects.requireNonNull(userEntity, "UserEntity cannot be null");
         userEntity.setProfileImage(queryDefaultProfileImageEntity());
     }
 }

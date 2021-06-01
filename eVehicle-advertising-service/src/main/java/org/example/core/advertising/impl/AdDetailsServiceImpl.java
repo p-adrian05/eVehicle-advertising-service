@@ -12,6 +12,7 @@ import org.example.core.advertising.persistence.repository.AdDetailsRepository;
 import org.example.core.advertising.persistence.repository.BasicAdDetailsRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -48,6 +49,7 @@ public class AdDetailsServiceImpl implements AdDetailsService {
         return Optional.empty();
     }
     public void updateAdDetails(AdDetailsDto adDetailsDto) throws UnknownAdvertisementException {
+        Objects.requireNonNull(adDetailsDto, "AdDetailsDto cannot be null during update process");
         if (!adDetailsRepository.existsById(adDetailsDto.getAdId())) {
             throw new UnknownAdvertisementException(
                 String.format("Advertisement not found by id: %s", adDetailsDto.getAdId()));
@@ -58,6 +60,8 @@ public class AdDetailsServiceImpl implements AdDetailsService {
     }
 
     public void createAdDetails(AdDetailsDto adDetailsDto, AdvertisementEntity advertisementEntity){
+        Objects.requireNonNull(adDetailsDto, "AdDetailsDto cannot be null during update process");
+        Objects.requireNonNull(advertisementEntity, "AdvertisementEntity cannot be null during creating ad details entity");
         BasicAdDetailsEntity basicAdDetailsEntity = adUtil.convertAdDetailsDtoToBasicEntity(adDetailsDto);
         basicAdDetailsEntity.setAdvertisement(advertisementEntity);
         basicAdDetailsRepository.save(basicAdDetailsEntity);
@@ -65,6 +69,7 @@ public class AdDetailsServiceImpl implements AdDetailsService {
         AdDetailsEntity adDetailsEntity = adUtil.convertAdDetailsDtoToEntity(adDetailsDto);
         adDetailsEntity.setAdvertisement(advertisementEntity);
         adDetailsRepository.save(adDetailsEntity);
+        log.info("Created AdDetails: {}", adDetailsDto);
     }
 
 }

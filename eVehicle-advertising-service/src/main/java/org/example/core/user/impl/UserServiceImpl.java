@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import javax.transaction.Transactional;
 import java.sql.Timestamp;
 import java.util.Date;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -35,6 +36,10 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public void createUser(@NonNull CreateUserDto createUserDto) throws UsernameAlreadyExistsException, EmailAlreadyExistsException {
+        Objects.requireNonNull(createUserDto, "CreatUserDto cannot be null for creating user");
+        Objects.requireNonNull(createUserDto.getEmail(), "Email cannot be null for creating user");
+        Objects.requireNonNull(createUserDto.getUsername(), "Username cannot be null for creating user");
+        Objects.requireNonNull(createUserDto.getPassword(), "Password cannot be null for creating user");
         if(userRepository.existsUserEntityByUsername(createUserDto.getUsername())){
             throw new UsernameAlreadyExistsException(String.format("Username already exists: %s",createUserDto.getUsername()));
         }
@@ -56,6 +61,7 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public void deleteUser(String username) throws UnknownUserException {
+        Objects.requireNonNull(username, "Username cannot be null for deleting user");
         UserEntity userEntity = queryUserEntity(username);
         userEntity.setEnabled(false);
         userRepository.save(userEntity);
@@ -64,6 +70,8 @@ public class UserServiceImpl implements UserService {
     @Transactional
     @Override
     public void updateUsername(String oldUsername,String newUsername) throws UsernameAlreadyExistsException, UnknownUserException {
+        Objects.requireNonNull(oldUsername, "Old username cannot be null for updating username");
+        Objects.requireNonNull(newUsername, "New username cannot be null for updating username");
         if(userRepository.existsUserEntityByUsername(newUsername)){
             throw new UsernameAlreadyExistsException(String.format("Username already exists: %s",newUsername));
         }
@@ -73,18 +81,19 @@ public class UserServiceImpl implements UserService {
         userRepository.save(userEntity);
     }
 
-
-
     @Override
     public Optional<UserDto> getUserByName(String username){
+        Objects.requireNonNull(username, "Username cannot be null");
         return convertUserEntityToDto(userRepository.findUserWithRolesAndImage(username));
     }
     @Override
     public Optional<UserDto> getUserByActivationCode(String code) {
+        Objects.requireNonNull(code, "Activation code cannot be null");
         return convertUserEntityToDto(userRepository.findByActivation(code));
     }
 
     public UserDto convertUserEntityToUserDto(UserEntity userEntity){
+        Objects.requireNonNull(userEntity, "UserEntity code cannot be null for converting");
         return UserDto.builder()
             .username(userEntity.getUsername())
             .created(userEntity.getCreated())
@@ -125,7 +134,4 @@ public class UserServiceImpl implements UserService {
         log.info("Queried user : {}",userEntity.get());
         return userEntity.get();
     }
-
-
-
 }
