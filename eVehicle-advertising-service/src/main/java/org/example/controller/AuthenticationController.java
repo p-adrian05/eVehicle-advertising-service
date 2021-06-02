@@ -26,18 +26,19 @@ public class AuthenticationController {
 
     @PostMapping(Mappings.AUTHENTICATE)
     @CrossOrigin
-    public AuthenticationResponseDto authenticate(@RequestBody AuthenticationRequestDto authenticationRequestDto)
-        throws AuthException, javax.security.auth.message.AuthException {
-
-        return new AuthenticationResponseDto(
-            loginService.login(authenticationRequestDto.getUsername(),authenticationRequestDto.getPassword()));
+    @ResponseBody
+    public AuthenticationResponseDto authentication(@RequestBody AuthenticationRequestDto authenticationRequestDto)
+        throws AuthException{
+        String token =
+            loginService.login(authenticationRequestDto.getUsername(),authenticationRequestDto.getPassword());
+        return new AuthenticationResponseDto(token);
     }
 
     @GetMapping(Mappings.AUTHENTICATE_ACTIVATE+"/{code}")
     @ResponseStatus(HttpStatus.ACCEPTED)
     @ResponseBody
     public String registrationActivation(@PathVariable String code)
-        throws AuthException, javax.security.auth.message.AuthException {
+        throws AuthException {
         loginService.activateUser(code);
         return "Successful activation";
     }

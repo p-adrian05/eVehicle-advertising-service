@@ -2,6 +2,7 @@ package org.example.core.user.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.example.core.security.AuthException;
 import org.example.core.security.JwtTokenProvider;
 import org.example.core.user.LoginService;
 import org.example.core.user.persistence.entity.UserEntity;
@@ -12,7 +13,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Service;
 
-import javax.security.auth.message.AuthException;
 import java.sql.Timestamp;
 import java.util.Date;
 import java.util.Objects;
@@ -42,8 +42,10 @@ public class LoginServiceImpl implements LoginService {
             userRepository.save(user.get());
             return jwtTokenProvider.createToken(authentication);
         } catch (AuthenticationException e) {
+            e.printStackTrace();
             throw new AuthException("Incorrect username or password");
         }
+
     }
 
     @Override

@@ -18,12 +18,15 @@ import org.example.core.advertising.persistence.entity.CategoryEntity;
 import org.example.core.advertising.persistence.entity.TypeEntity;
 import org.example.core.advertising.persistence.repository.AdvertisementQueryParams;
 import org.example.core.advertising.persistence.repository.AdvertisementRepository;
+import org.example.core.finance.bank.Bank;
+import org.example.core.finance.money.Money;
 import org.example.core.image.ImageService;
 import org.example.core.image.persistence.entity.ImageEntity;
 import org.example.core.security.AuthException;
 import org.example.core.storage.AdImageStorageService;
 import org.example.core.user.exception.UnknownUserException;
 import org.example.core.user.persistence.entity.UserEntity;
+import org.springframework.beans.propertyeditors.CurrencyEditor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -36,6 +39,7 @@ import java.nio.file.Path;
 import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Currency;
 import java.util.Date;
 import java.util.Objects;
 import java.util.Optional;
@@ -117,6 +121,7 @@ public class AdvertisementServiceImpl implements AdvertisementService {
         advertisementEntity.setProductCondition(advertisementDto.getCondition());
         advertisementEntity.setTitle(advertisementDto.getTitle());
         advertisementEntity.setPrice(advertisementDto.getPrice());
+        //advertisementEntity.setCurrency(Currency.getInstance(advertisementDto.getCurrency));
         adDetailsService.updateAdDetails(adDetails);
         advertisementEntity.setImages(getUpdatedImages(advertisementEntity.getImages(),imageFiles));
 
@@ -146,14 +151,12 @@ public class AdvertisementServiceImpl implements AdvertisementService {
 
 
     @Override
-    public Slice<AdLabelDto> getAdvertisements(AdvertisementQueryParams params, Pageable pageable) {
+    public Slice<AdLabelDto> getAdvertisements(AdvertisementQueryParams params, Pageable pageable, Currency currency) {
         Objects.requireNonNull(params, "AdvertisementQueryParams cannot be null");
         Objects.requireNonNull(pageable, "Pageable cannot be null");
         return advertisementRepository.findByParams(params, pageable)
-            .map(adUtil::convertAdvertisementEntityToLabelDto);
+            .map(advertisementEntity -> adUtil.convertAdvertisementEntityToLabelDto(advertisementEntity,currency));
     }
-
-
 
     @Override
     public Page<AdLabelDto> getAdvertisementsByUsername(String username, Pageable pageable, AdState state) {
@@ -196,7 +199,8 @@ public class AdvertisementServiceImpl implements AdvertisementService {
         CategoryEntity categoryEntity = adUtil.queryCategory(advertisementDto.getCategory());
         TypeEntity typeEntity = adUtil.getTypeEntity(advertisementDto.getType());
         typeEntity.setBrandEntity(adUtil.getBrandEntity(advertisementDto.getBrand()));
-
+        //todo
+       // Money money = new Money(advertisementDto.getPrice(), Currency.getInstance(advertisementDto.getCurrency));
         return AdvertisementEntity.builder()
             .creator(userEntity)
             .category(categoryEntity)

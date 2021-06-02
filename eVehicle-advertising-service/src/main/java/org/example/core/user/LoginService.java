@@ -1,6 +1,7 @@
 package org.example.core.user;
 
-import javax.security.auth.message.AuthException;
+
+import org.example.core.security.AuthException;
 
 public interface LoginService {
 

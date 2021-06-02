@@ -34,7 +34,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     private AuthUserDto convertUserEntityToDto(UserEntity userEntity){
         return AuthUserDto.builder()
             .email(userEntity.getEmail())
-            .roles(userEntity.getRoles().stream().map(RoleEntity::getRoleName).collect(Collectors.toList()))
+            .roles(userEntity.getRoles().stream().map(roleEntity -> roleEntity.getRoleName().name()).collect(Collectors.toList()))
             .password(userEntity.getPassword())
             .username(userEntity.getUsername())
             .enabled(userEntity.isEnabled())

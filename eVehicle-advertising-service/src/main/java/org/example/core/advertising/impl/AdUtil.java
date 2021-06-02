@@ -16,12 +16,15 @@ import org.example.core.advertising.persistence.entity.TypeEntity;
 import org.example.core.advertising.persistence.repository.BrandRepository;
 import org.example.core.advertising.persistence.repository.CategoryRepository;
 import org.example.core.advertising.persistence.repository.TypeRepository;
+import org.example.core.finance.bank.Bank;
+import org.example.core.finance.money.Money;
 import org.example.core.image.persistence.entity.ImageEntity;
 import org.example.core.user.exception.UnknownUserException;
 import org.example.core.user.persistence.entity.UserEntity;
 import org.example.core.user.persistence.repository.UserRepository;
 import org.springframework.stereotype.Component;
 
+import java.util.Currency;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -35,6 +38,7 @@ class AdUtil {
     private final UserRepository userRepository;
     private final TypeRepository typeRepository;
     private final BrandRepository brandRepository;
+    private final Bank bank;
 
     UserEntity queryUserEntity(String username) throws UnknownUserException {
         Objects.requireNonNull(username, "Username cannot be null for user query");
@@ -125,6 +129,18 @@ class AdUtil {
             .basicAdDetails(convertBasicAdDetailsEntityToModel(advertisementEntity.getBasicAdDetails()))
             .build();
     }
+    AdLabelDto convertAdvertisementEntityToLabelDto(AdvertisementEntity advertisementEntity, Currency currency) {
+        Objects.requireNonNull(advertisementEntity, "AdvertisementEntity cannot be null during converting");
+        //Money money = new Money(advertisementEntity.getPrice(),advertisementEntity.getCurrency());
+      //  if(!currency.getCurrencyCode().equals(advertisementEntity.getCurrency().getCurrencyCode())){
+            //money = new Money(advertisementEntity.getPrice(),advertisementEntity.getCurrency()).to(currency,bank);
+        //}
+//        AdLabelDto adLabelDto = convertAdvertisementEntityToLabelDto(advertisementEntity);
+//        adLabelDto.setPrice(money.getAmount());
+//        adLabelDto.setCurrency(money.getCurrency().getCurrencyCode());
+
+        return convertAdvertisementEntityToLabelDto(advertisementEntity);
+    }
 
     BasicAdDetails convertBasicAdDetailsEntityToModel(BasicAdDetailsEntity basicAdDetailsEntity) {
         Objects.requireNonNull(basicAdDetailsEntity, "BasicAdDetailsEntity cannot be null during converting");
@@ -152,6 +168,7 @@ class AdUtil {
             .created(advertisementEntity.getCreated())
             .title(advertisementEntity.getTitle())
             .state(advertisementEntity.getState())
+            //.currency(advertisementEntity.getCurrency().getCurrencyCode())
             .type(advertisementEntity.getType().getName())
             .imagePaths(advertisementEntity.getImages().stream()
                 .map(ImageEntity::getPath).collect(Collectors.toSet()))

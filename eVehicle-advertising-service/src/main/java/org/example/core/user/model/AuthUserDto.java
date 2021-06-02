@@ -23,5 +23,5 @@ public class AuthUserDto {
 
     private final boolean enabled;
 
-    private final List<Role> roles;
+    private final List<String> roles;
 }

@@ -57,6 +57,7 @@ import java.awt.Toolkit;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
+import java.util.Currency;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -88,7 +89,7 @@ public class AdvertisementController {
             adQueryParams = ModelDtoConverter.convertSearchParamsToObject(searchParams, AdvertisementQueryParams.class);
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortOrder),
             adUtilService.convertSortParamToValidForm(sortParam)));
-        return advertisementService.getAdvertisements(adQueryParams, pageable);
+        return advertisementService.getAdvertisements(adQueryParams, pageable, Currency.getInstance("HUF"));
     }
 
     @GetMapping(Mappings.ADVERTISEMENT + "/{id}")
