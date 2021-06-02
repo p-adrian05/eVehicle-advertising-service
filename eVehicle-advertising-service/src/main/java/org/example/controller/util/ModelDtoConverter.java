@@ -57,6 +57,7 @@ public class ModelDtoConverter {
                 .price(createAdvertisementDto.getPrice())
                 .title(createAdvertisementDto.getTitle())
                 .type(createAdvertisementDto.getType())
+            .currency(createAdvertisementDto.getCurrency())
                 .build();
     }
 

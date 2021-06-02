@@ -113,33 +113,25 @@ class AdUtil {
             .build();
     }
 
-    AdLabelDto convertAdvertisementEntityToLabelDto(AdvertisementEntity advertisementEntity) {
+    AdLabelDto convertAdvertisementEntityToLabelDto(AdvertisementEntity advertisementEntity, Currency currency) {
         Objects.requireNonNull(advertisementEntity, "AdvertisementEntity cannot be null during converting");
+        Objects.requireNonNull(advertisementEntity.getCurrency(), "Currency cannot be null during converting");
+        Money money = new Money(advertisementEntity.getPrice(), Currency.getInstance(advertisementEntity.getCurrency()))
+            .to(currency, bank);
         return AdLabelDto.builder()
             .id(advertisementEntity.getId())
-            .price(advertisementEntity.getPrice())
+            .price(money.getAmount())
             .brand(advertisementEntity.getType().getBrandEntity().getBrandName())
             .condition(advertisementEntity.getProductCondition())
             .created(advertisementEntity.getCreated())
             .title(advertisementEntity.getTitle())
             .state(advertisementEntity.getState())
             .type(advertisementEntity.getType().getName())
+            .currency(money.getCurrency().getCurrencyCode())
             .imagePaths(advertisementEntity.getImages().stream()
                 .map(ImageEntity::getPath).collect(Collectors.toList()))
             .basicAdDetails(convertBasicAdDetailsEntityToModel(advertisementEntity.getBasicAdDetails()))
             .build();
-    }
-    AdLabelDto convertAdvertisementEntityToLabelDto(AdvertisementEntity advertisementEntity, Currency currency) {
-        Objects.requireNonNull(advertisementEntity, "AdvertisementEntity cannot be null during converting");
-        //Money money = new Money(advertisementEntity.getPrice(),advertisementEntity.getCurrency());
-      //  if(!currency.getCurrencyCode().equals(advertisementEntity.getCurrency().getCurrencyCode())){
-            //money = new Money(advertisementEntity.getPrice(),advertisementEntity.getCurrency()).to(currency,bank);
-        //}
-//        AdLabelDto adLabelDto = convertAdvertisementEntityToLabelDto(advertisementEntity);
-//        adLabelDto.setPrice(money.getAmount());
-//        adLabelDto.setCurrency(money.getCurrency().getCurrencyCode());
-
-        return convertAdvertisementEntityToLabelDto(advertisementEntity);
     }
 
     BasicAdDetails convertBasicAdDetailsEntityToModel(BasicAdDetailsEntity basicAdDetailsEntity) {
@@ -156,11 +148,15 @@ class AdUtil {
             .build();
     }
 
-    AdvertisementDto convertAdvertisementEntityToDto(AdvertisementEntity advertisementEntity) {
+    AdvertisementDto convertAdvertisementEntityToDto(AdvertisementEntity advertisementEntity,Currency currency) {
         Objects.requireNonNull(advertisementEntity, "AdvertisementEntity cannot be null during converting");
+        Objects.requireNonNull(advertisementEntity.getCurrency(), "Currency cannot be null during converting");
+        Money money = new Money(advertisementEntity.getPrice(), Currency.getInstance(advertisementEntity.getCurrency()))
+            .to(currency, bank);
         return AdvertisementDto.builder()
             .id(advertisementEntity.getId())
-            .price(advertisementEntity.getPrice())
+            .price(money.getAmount())
+            .currency(money.getCurrency().getCurrencyCode())
             .creator(advertisementEntity.getCreator().getUsername())
             .category(advertisementEntity.getCategory().getName())
             .brand(advertisementEntity.getType().getBrandEntity().getBrandName())
@@ -168,7 +164,6 @@ class AdUtil {
             .created(advertisementEntity.getCreated())
             .title(advertisementEntity.getTitle())
             .state(advertisementEntity.getState())
-            //.currency(advertisementEntity.getCurrency().getCurrencyCode())
             .type(advertisementEntity.getType().getName())
             .imagePaths(advertisementEntity.getImages().stream()
                 .map(ImageEntity::getPath).collect(Collectors.toSet()))

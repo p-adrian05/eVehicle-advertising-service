@@ -4,11 +4,7 @@ import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import org.example.core.advertising.persistence.AdState;
 import org.example.core.advertising.persistence.ProductState;
-
-import java.sql.Timestamp;
-import java.util.List;
 
 @Builder
 @EqualsAndHashCode
@@ -28,5 +24,7 @@ public class UpdateAdvertisementDto {
 
         private final String title;
 
-        private final int price;
+        private final double price;
+
+        private final String currency;
 }

@@ -40,6 +40,7 @@ public class AttributeNames {
     public static final String MAX_KM = "maxKm";
     public static final String MIN_PERFORMANCE = "minPerf";
     public static final String MAX_PERFORMANCE = "maxPerf";
+    public static final String CURRENCY = "currency";
 
 
 

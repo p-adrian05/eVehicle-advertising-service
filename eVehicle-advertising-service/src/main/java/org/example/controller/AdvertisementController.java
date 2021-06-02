@@ -83,19 +83,20 @@ public class AdvertisementController {
             String sortOrder,
         @RequestParam(name = AttributeNames.SORT_PARAM, required = false, defaultValue = AttributeNames.ADVERTISEMENTS_DEFAULT_SORT_PARAM)
             String sortParam,
+        @RequestParam(name = AttributeNames.CURRENCY, required = false,defaultValue = "HUF") String currency,
         @RequestParam(required = false) Map<String, String> searchParams) {
 
         AdvertisementQueryParams
             adQueryParams = ModelDtoConverter.convertSearchParamsToObject(searchParams, AdvertisementQueryParams.class);
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortOrder),
             adUtilService.convertSortParamToValidForm(sortParam)));
-        return advertisementService.getAdvertisements(adQueryParams, pageable, Currency.getInstance("HUF"));
+        return advertisementService.getAdvertisements(adQueryParams, pageable, Currency.getInstance(currency));
     }
 
     @GetMapping(Mappings.ADVERTISEMENT + "/{id}")
     @CrossOrigin
-    public AdvertisementDto getAdvertisementById(@PathVariable("id") int id) {
-        Optional<AdvertisementDto> advertisementDto = advertisementService.getAdvertisementById(id);
+    public AdvertisementDto getAdvertisementById(@PathVariable("id") int id,@RequestParam(name = AttributeNames.CURRENCY,  required = false,defaultValue = "HUF") String currency) {
+        Optional<AdvertisementDto> advertisementDto = advertisementService.getAdvertisementById(id, Currency.getInstance(currency));
         if (advertisementDto.isPresent()) {
             return advertisementDto.get();
         }
@@ -109,6 +110,7 @@ public class AdvertisementController {
                                                             Integer page,
                                                         @RequestParam(name = AttributeNames.PAGE_SIZE, required = false, defaultValue = AttributeNames.USER_ADVERTISEMENTS_PAGE_SIZE)
                                                             Integer size,
+                                                        @RequestParam(name = AttributeNames.CURRENCY, required = false, defaultValue = "HUF") String currency,
                                                         @RequestParam(name = AttributeNames.SORT_ORDER, required = false, defaultValue = AttributeNames.DESC)
                                                             String sortOrder,
                                                         @RequestParam(name = "state", required = false, defaultValue = "ACTIVE")
@@ -119,7 +121,7 @@ public class AdvertisementController {
             throw new AuthException("Access Denied");
         }
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.fromString(sortOrder), sortParam));
-        return advertisementService.getAdvertisementsByUsername(username, pageable, state);
+        return advertisementService.getAdvertisementsByUsername(username, pageable, state,Currency.getInstance(currency));
     }
 
     @GetMapping(Mappings.ADVERTISEMENTS + "/{username}/" + Mappings.SAVED)
@@ -162,6 +164,7 @@ public class AdvertisementController {
             .condition(updateAdvertisementDto.getCondition())
             .price(updateAdvertisementDto.getPrice())
             .title(updateAdvertisementDto.getTitle())
+            .currency(updateAdvertisementDto.getCurrency())
             .type(updateAdvertisementDto.getType())
             .build();
         AdDetailsDto adDetails = ModelDtoConverter.convertAdvertisementDetailsDtoToModel(advertisementDetailsDto, id);

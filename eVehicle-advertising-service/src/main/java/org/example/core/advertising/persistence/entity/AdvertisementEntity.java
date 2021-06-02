@@ -87,7 +87,10 @@ public class AdvertisementEntity {
     private ProductState productCondition;
 
     @Column
-    private int price;
+    private double price;
+
+    @Column
+    private String currency;
 
     @Column
     @Enumerated(EnumType.STRING)

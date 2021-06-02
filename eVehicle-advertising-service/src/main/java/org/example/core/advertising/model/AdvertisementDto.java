@@ -31,7 +31,9 @@ public class AdvertisementDto {
 
         private final String title;
 
-        private final int price;
+        private final double price;
+
+        private final String currency;
 
         private final AdState state;
 

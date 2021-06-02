@@ -3,12 +3,8 @@ package org.example.controller.dto.advertisement;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import lombok.experimental.SuperBuilder;
-import org.example.core.advertising.persistence.AdState;
 import org.example.core.advertising.persistence.ProductState;
-
 
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotEmpty;
@@ -35,9 +31,12 @@ public class CreateAdvertisementDto{
     @NotNull(message = "title: cannot be null")
     @NotEmpty(message = "title: cannot be empty")
     private String title;
+    @NotNull(message = "currency: cannot be null")
+    @NotEmpty(message = "currency: cannot be empty")
+    private String currency;
 
     private ProductState condition;
     @NotNull(message = "price: cannot be null")
     @Min(0)
-    private int price;
+    private double price;
 }

@@ -24,5 +24,7 @@ public class CreateAdDto {
 
         private final String title;
 
-        private final int price;
+        private final double price;
+
+        private final String currency;
 }

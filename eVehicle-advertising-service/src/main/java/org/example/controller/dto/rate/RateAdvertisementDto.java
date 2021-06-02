@@ -11,5 +11,5 @@ public class RateAdvertisementDto {
 
     private String title;
 
-    private int price;
+    private double price;
 }

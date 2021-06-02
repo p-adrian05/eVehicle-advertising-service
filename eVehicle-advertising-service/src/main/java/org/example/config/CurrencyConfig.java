@@ -14,6 +14,7 @@ public class CurrencyConfig {
         return StaticBank.of(() -> new StaticExchangeRates.Builder()
             .addRate("HUF", "EUR", 0.0029, 346)
             .addRate("HUF", "USD", 0.0035, 283)
+            .addRate("EUR", "USD", 1.22, 0.82)
             .build());
     }
 }
