@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 import org.example.core.advertising.model.AdvertisementDto;
 import org.example.core.rating.persistence.entity.RateState;
 import org.example.core.rating.persistence.entity.RateStatus;
@@ -17,6 +18,7 @@ import java.sql.Timestamp;
 @EqualsAndHashCode
 @RequiredArgsConstructor
 @Getter
+@ToString
 public class UserRateDto {
 
     private final UserRateState ratedState;

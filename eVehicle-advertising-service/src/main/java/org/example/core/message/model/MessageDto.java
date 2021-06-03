@@ -4,6 +4,7 @@ import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 
 import java.sql.Timestamp;
 import java.util.List;
@@ -13,6 +14,7 @@ import java.util.List;
 @EqualsAndHashCode
 @RequiredArgsConstructor
 @Getter
+@ToString
 public class MessageDto {
 
     private final int id;

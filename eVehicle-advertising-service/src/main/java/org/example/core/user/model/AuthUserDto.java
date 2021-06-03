@@ -4,6 +4,7 @@ import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 import org.example.core.role.model.Role;
 
 import java.util.List;
@@ -13,6 +14,7 @@ import java.util.List;
 @EqualsAndHashCode
 @RequiredArgsConstructor
 @Getter
+@ToString
 public class AuthUserDto {
 
     private final String username;

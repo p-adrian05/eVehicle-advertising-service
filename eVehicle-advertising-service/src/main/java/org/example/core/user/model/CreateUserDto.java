@@ -4,11 +4,13 @@ import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 
 @Builder
 @EqualsAndHashCode
 @RequiredArgsConstructor
 @Getter
+@ToString
 public class CreateUserDto {
 
     private final String username;

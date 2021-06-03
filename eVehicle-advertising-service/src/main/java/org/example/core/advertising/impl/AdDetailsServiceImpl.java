@@ -62,11 +62,11 @@ public class AdDetailsServiceImpl implements AdDetailsService {
     public void createAdDetails(AdDetailsDto adDetailsDto, AdvertisementEntity advertisementEntity){
         Objects.requireNonNull(adDetailsDto, "AdDetailsDto cannot be null during update process");
         Objects.requireNonNull(advertisementEntity, "AdvertisementEntity cannot be null during creating ad details entity");
-        BasicAdDetailsEntity basicAdDetailsEntity = adUtil.convertAdDetailsDtoToBasicEntity(adDetailsDto);
+        BasicAdDetailsEntity basicAdDetailsEntity = adUtil.convertAdDetailsToBasicAdDetailsEntity(adDetailsDto);
         basicAdDetailsEntity.setAdvertisement(advertisementEntity);
         basicAdDetailsRepository.save(basicAdDetailsEntity);
 
-        AdDetailsEntity adDetailsEntity = adUtil.convertAdDetailsDtoToEntity(adDetailsDto);
+        AdDetailsEntity adDetailsEntity = adUtil.convertAdDetailsToAdDetailsEntity(adDetailsDto);
         adDetailsEntity.setAdvertisement(advertisementEntity);
         adDetailsRepository.save(adDetailsEntity);
         log.info("Created AdDetails: {}", adDetailsDto);

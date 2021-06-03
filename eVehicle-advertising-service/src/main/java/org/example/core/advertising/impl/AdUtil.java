@@ -86,33 +86,6 @@ class AdUtil {
         return newBrandEntity;
     }
 
-    AdDetailsEntity convertAdDetailsDtoToEntity(AdDetailsDto adDetailsDto) {
-        Objects.requireNonNull(adDetailsDto, "AdDetailsDto cannot be null during converting");
-        return AdDetailsEntity.builder()
-            .adId(adDetailsDto.getAdId())
-            .maxSpeed(adDetailsDto.getMaxSpeed())
-            .productRange(adDetailsDto.getRange())
-            .weight(adDetailsDto.getWeight())
-            .accelaration(adDetailsDto.getAccelaration())
-            .color(adDetailsDto.getColor())
-            .description(adDetailsDto.getDescription())
-            .build();
-    }
-
-    BasicAdDetailsEntity convertAdDetailsDtoToBasicEntity(AdDetailsDto adDetailsDto) {
-        Objects.requireNonNull(adDetailsDto, "AdDetailsDto cannot be null during converting");
-        return BasicAdDetailsEntity.builder()
-            .adId(adDetailsDto.getAdId())
-            .performance(adDetailsDto.getPerformance())
-            .batterySize(adDetailsDto.getBatterySize())
-            .km(adDetailsDto.getKm())
-            .chargeSpeed(adDetailsDto.getChargeSpeed())
-            .drive(adDetailsDto.getDrive())
-            .seatNumber(adDetailsDto.getSeatNumber())
-            .year(adDetailsDto.getYear())
-            .build();
-    }
-
     AdLabelDto convertAdvertisementEntityToLabelDto(AdvertisementEntity advertisementEntity, Currency currency) {
         Objects.requireNonNull(advertisementEntity, "AdvertisementEntity cannot be null during converting");
         Objects.requireNonNull(advertisementEntity.getCurrency(), "Currency cannot be null during converting");

@@ -4,6 +4,7 @@ import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 import org.example.core.advertising.persistence.AdState;
 import org.example.core.advertising.persistence.ProductState;
 
@@ -15,6 +16,7 @@ import java.util.Set;
 @EqualsAndHashCode
 @RequiredArgsConstructor
 @Getter
+@ToString
 public class AdvertisementDto {
 
         private final int id;

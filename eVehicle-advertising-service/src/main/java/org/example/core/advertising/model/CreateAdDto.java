@@ -4,12 +4,14 @@ import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 import org.example.core.advertising.persistence.ProductState;
 
 @Builder
 @EqualsAndHashCode
 @RequiredArgsConstructor
 @Getter
+@ToString
 public class CreateAdDto {
 
         private final String creator;

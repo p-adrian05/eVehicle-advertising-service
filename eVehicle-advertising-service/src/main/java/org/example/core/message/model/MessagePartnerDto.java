@@ -3,12 +3,14 @@ package org.example.core.message.model;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 
 import java.util.Objects;
 
 @Builder
 @RequiredArgsConstructor
 @Getter
+@ToString
 public class MessagePartnerDto {
 
     private final String partnerUsername;
