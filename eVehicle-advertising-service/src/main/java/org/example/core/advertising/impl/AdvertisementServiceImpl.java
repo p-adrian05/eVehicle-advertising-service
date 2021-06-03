@@ -18,10 +18,8 @@ import org.example.core.advertising.persistence.entity.CategoryEntity;
 import org.example.core.advertising.persistence.entity.TypeEntity;
 import org.example.core.advertising.persistence.repository.AdvertisementQueryParams;
 import org.example.core.advertising.persistence.repository.AdvertisementRepository;
-import org.example.core.image.ImageService;
-import org.example.core.image.persistence.entity.ImageEntity;
+import org.example.core.image.AdImageService;
 import org.example.core.security.AuthException;
-import org.example.core.storage.AdImageStorageService;
 import org.example.core.user.exception.UnknownUserException;
 import org.example.core.user.persistence.entity.UserEntity;
 import org.springframework.data.domain.Page;
@@ -32,16 +30,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.transaction.Transactional;
-import java.nio.file.Path;
 import java.sql.Timestamp;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Currency;
 import java.util.Date;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Service
@@ -50,8 +43,7 @@ public class AdvertisementServiceImpl implements AdvertisementService {
 
 
     private final AdvertisementRepository advertisementRepository;
-    private final ImageService imageService;
-    private final AdImageStorageService adImageStorageService;
+    private final AdImageService adImageService;
     private final AdUtil adUtil;
     private final AdDetailsService adDetailsService;
 
@@ -64,36 +56,11 @@ public class AdvertisementServiceImpl implements AdvertisementService {
         Objects.requireNonNull(adDetailsDto, "AdDetailsDto cannot be null during creation");
         Objects.requireNonNull(imageFiles, "ImageFile array cannot be null");
         AdvertisementEntity advertisementEntity = createNewAdvertisement(advertisementDto);
-        Set<Path> imagePaths = adImageStorageService.store(imageFiles);
-        advertisementEntity.setImages(
-            imageService.createImageEntities(imagePaths));
+        advertisementEntity.setImages(adImageService.store(imageFiles));
         AdvertisementEntity newAdvertisementEntity = advertisementRepository.save(advertisementEntity);
         log.info("New advertisementEntity: {}", newAdvertisementEntity);
 
         adDetailsService.createAdDetails(adDetailsDto, newAdvertisementEntity);
-    }
-
-    private Set<ImageEntity> getUpdatedImages(Set<ImageEntity> currentImages, MultipartFile[] imageFiles)
-        throws FileUploadException {
-        Set<String> imageFileNames =
-            Arrays.stream(imageFiles).map(MultipartFile::getOriginalFilename).collect(Collectors.toSet());
-        Set<String> originalImagesPaths = currentImages.stream().map(
-            ImageEntity::getPath).collect(Collectors.toSet());
-
-        Set<ImageEntity> toDeleteImages =
-            currentImages.stream().filter(imageEntity -> !imageFileNames.contains(imageEntity.getPath()))
-                .collect(Collectors.toSet());
-
-        MultipartFile[] newFiles = Arrays.stream(imageFiles)
-            .filter(imageFile -> !originalImagesPaths.contains(imageFile.getOriginalFilename()))
-            .toArray(MultipartFile[]::new);
-
-        Set<ImageEntity> notToRemoveImageEntities =
-            currentImages.stream().filter(imageEntity -> imageFileNames.contains(imageEntity.getPath()))
-                .collect(Collectors.toSet());
-        notToRemoveImageEntities.addAll(imageService.createImageEntities(adImageStorageService.store(newFiles)));
-        deleteImageFiles(toDeleteImages.stream().map(ImageEntity::getPath).collect(Collectors.toList()));
-        return notToRemoveImageEntities;
     }
 
     @Override
@@ -120,15 +87,10 @@ public class AdvertisementServiceImpl implements AdvertisementService {
         advertisementEntity.setPrice(advertisementDto.getPrice());
         advertisementEntity.setCurrency(Currency.getInstance(advertisementDto.getCurrency()).getCurrencyCode());
         adDetailsService.updateAdDetails(adDetails);
-        advertisementEntity.setImages(getUpdatedImages(advertisementEntity.getImages(), imageFiles));
+        advertisementEntity.setImages(adImageService.updateAndStore(advertisementEntity.getImages(), imageFiles));
 
         advertisementRepository.save(advertisementEntity);
         log.info("Updated advertisementEntity: {}", advertisementEntity);
-    }
-
-
-    private void deleteImageFiles(Collection<String> toDeletedImageModels) {
-        toDeletedImageModels.forEach(adImageStorageService::deleteImageByPath);
     }
 
     @Override
