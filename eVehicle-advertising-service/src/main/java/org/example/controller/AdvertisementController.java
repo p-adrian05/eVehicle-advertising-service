@@ -144,7 +144,7 @@ public class AdvertisementController {
 
     @PutMapping(Mappings.ADVERTISEMENT + "/{id}")
     @CrossOrigin
-    public void updateAdvertisement(@Valid @ModelAttribute CreateAdvertisementDto updateAdvertisementDto,
+    public void updateAdvertisement(@Valid @ModelAttribute CreateAdvertisementDto createAdvertisementDto,
                                     @Valid @ModelAttribute AdvertisementDetailsDto advertisementDetailsDto,
                                     @PathVariable int id,
                                     @RequestParam MultipartFile[] images, BindingResult bindingResult)
@@ -159,13 +159,13 @@ public class AdvertisementController {
         }
         UpdateAdvertisementDto advertisement = UpdateAdvertisementDto.builder()
             .id(id)
-            .category(updateAdvertisementDto.getCategory())
-            .brand(updateAdvertisementDto.getBrand())
-            .condition(updateAdvertisementDto.getCondition())
-            .price(updateAdvertisementDto.getPrice())
-            .title(updateAdvertisementDto.getTitle())
-            .currency(updateAdvertisementDto.getCurrency())
-            .type(updateAdvertisementDto.getType())
+            .category(createAdvertisementDto.getCategory())
+            .brand(createAdvertisementDto.getBrand())
+            .condition(createAdvertisementDto.getCondition())
+            .price(createAdvertisementDto.getPrice())
+            .title(createAdvertisementDto.getTitle())
+            .currency(createAdvertisementDto.getCurrency())
+            .type(createAdvertisementDto.getType())
             .build();
         AdDetailsDto adDetails = ModelDtoConverter.convertAdvertisementDetailsDtoToModel(advertisementDetailsDto, id);
         advertisementService.updateAdvertisementWithDetails(advertisement, adDetails, images);

@@ -97,6 +97,7 @@ public class AdvertisementEntity {
     private AdState state;
 
     @Column
+    @EqualsAndHashCode.Exclude
     private Timestamp created;
 
     public void addImage(ImageEntity imageEntity){

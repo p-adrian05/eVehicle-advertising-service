@@ -71,10 +71,6 @@ public class AdvertisementServiceImpl implements AdvertisementService {
         Objects.requireNonNull(advertisementDto, "AdvertisementDto cannot be null during update");
         Objects.requireNonNull(adDetails, "AdDetailsDto cannot be null during update");
         Objects.requireNonNull(imageFiles, "ImageFile array cannot be null");
-        if (!advertisementRepository.existsByIdAndAndCreator_Username(advertisementDto.getId(),
-            SecurityContextHolder.getContext().getAuthentication().getName())) {
-            throw new AuthException("Access denied");
-        }
 
         AdvertisementEntity advertisementEntity = queryAdvertisementEntity(advertisementDto.getId());
         CategoryEntity categoryEntity = adUtil.queryCategory(advertisementDto.getCategory());
@@ -86,9 +82,8 @@ public class AdvertisementServiceImpl implements AdvertisementService {
         advertisementEntity.setTitle(advertisementDto.getTitle());
         advertisementEntity.setPrice(advertisementDto.getPrice());
         advertisementEntity.setCurrency(Currency.getInstance(advertisementDto.getCurrency()).getCurrencyCode());
-        adDetailsService.updateAdDetails(adDetails);
         advertisementEntity.setImages(adImageService.updateAndStore(advertisementEntity.getImages(), imageFiles));
-
+        adDetailsService.updateAdDetails(adDetails);
         advertisementRepository.save(advertisementEntity);
         log.info("Updated advertisementEntity: {}", advertisementEntity);
     }
@@ -107,7 +102,6 @@ public class AdvertisementServiceImpl implements AdvertisementService {
     public Optional<AdDetailsDto> getAdDetailsById(int id) {
         return adDetailsService.getAdDetailsById(id);
     }
-
 
     @Override
     public Slice<AdLabelDto> getAdvertisements(AdvertisementQueryParams params, Pageable pageable, Currency currency) {
