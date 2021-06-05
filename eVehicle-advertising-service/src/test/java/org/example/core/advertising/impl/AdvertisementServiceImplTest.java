@@ -26,6 +26,8 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -105,7 +107,7 @@ public class AdvertisementServiceImplTest {
         .title(createAdDto.getTitle())
         .productCondition(createAdDto.getCondition())
         .state(AdState.ACTIVE)
-        .images(new HashSet<>())
+        .images(Set.of(new ImageEntity()))
         .created(new Timestamp(1))
         .price(createAdDto.getPrice())
         .currency(Currency.getInstance(createAdDto.getCurrency()).getCurrencyCode())
@@ -333,8 +335,9 @@ public class AdvertisementServiceImplTest {
         Mockito.verify(advertisementRepository).findByIdWithCategoryAndType(advertisementEntity.getId());
         Mockito.verify(adUtil).convertAdvertisementEntityToDto(advertisementEntity,
             Currency.getInstance(advertisementEntity.getCurrency()));
-        Mockito.verifyNoMoreInteractions(advertisementRepository,adUtil);
+        Mockito.verifyNoMoreInteractions(advertisementRepository, adUtil);
     }
+
     @Test
     public void testGetAdvertisementByIdShouldCallAdvertisementRepositoryAndReturnEmptyIfNotExistsAdById() {
         // Given
@@ -348,6 +351,7 @@ public class AdvertisementServiceImplTest {
         Mockito.verify(advertisementRepository).findByIdWithCategoryAndType(advertisementEntity.getId());
         Mockito.verifyNoMoreInteractions(advertisementRepository);
     }
+
     @Test
     public void testGetAdDetailsByIdShouldCallAdDetailsServiceAndReturnOptionalAdDetailsDto() {
         // Given
@@ -361,6 +365,7 @@ public class AdvertisementServiceImplTest {
         Mockito.verify(adDetailsService).getAdDetailsById(adDetailsDto.getAdId());
         Mockito.verifyNoMoreInteractions(adDetailsService);
     }
+
     @Test
     public void testGetAdvertisementsShouldCallAdvertisementRepositoryAndReturnSliceOfAdLabelDto() {
         // Given
@@ -368,20 +373,82 @@ public class AdvertisementServiceImplTest {
         Currency currency = Currency.getInstance("HUF");
         Slice<AdvertisementEntity> advertisementEntities = new SliceImpl<>(List.of(advertisementEntity));
         AdvertisementQueryParams advertisementQueryParams = AdvertisementQueryParams.builder().build();
-        Pageable pageable = PageRequest.of(1,1);
+        Pageable pageable = PageRequest.of(1, 1);
 
-        Mockito.when(advertisementRepository.findByParams(advertisementQueryParams,pageable))
+        Mockito.when(advertisementRepository.findByParams(advertisementQueryParams, pageable))
             .thenReturn(advertisementEntities);
-        Mockito.when(adUtil.convertAdvertisementEntityToLabelDto(advertisementEntity,currency))
+        Mockito.when(adUtil.convertAdvertisementEntityToLabelDto(advertisementEntity, currency))
             .thenReturn(adLabelDto);
         // When
         Slice<AdLabelDto> actual = underTest
-            .getAdvertisements(advertisementQueryParams,pageable,currency);
+            .getAdvertisements(advertisementQueryParams, pageable, currency);
         // Then
         Assertions.assertEquals(adLabelDtos, actual);
-        Mockito.verify(advertisementRepository).findByParams(advertisementQueryParams,pageable);
-        Mockito.verify(adUtil).convertAdvertisementEntityToLabelDto(advertisementEntity,currency);
-        Mockito.verifyNoMoreInteractions(advertisementRepository,adUtil);
+        Mockito.verify(advertisementRepository).findByParams(advertisementQueryParams, pageable);
+        Mockito.verify(adUtil).convertAdvertisementEntityToLabelDto(advertisementEntity, currency);
+        Mockito.verifyNoMoreInteractions(advertisementRepository, adUtil);
+    }
+
+    @Test
+    public void testGetAdvertisementsByUsernameShouldCallAdvertisementRepositoryAndReturnPageOfAdLabelDto() {
+        // Given
+        Page<AdLabelDto> adLabelDtos = new PageImpl<>(List.of(adLabelDto));
+        Currency currency = Currency.getInstance("HUF");
+        Page<AdvertisementEntity> advertisementEntities = new PageImpl<>(List.of(advertisementEntity));
+        Pageable pageable = PageRequest.of(1, 1);
+
+        Mockito.when(
+            advertisementRepository.findByCreator(userEntity.getUsername(), pageable, advertisementEntity.getState()))
+            .thenReturn(advertisementEntities);
+        Mockito.when(adUtil.convertAdvertisementEntityToLabelDto(advertisementEntity, currency))
+            .thenReturn(adLabelDto);
+        // When
+        Page<AdLabelDto> actual = underTest
+            .getAdvertisementsByUsername(userEntity.getUsername(), pageable, advertisementEntity.getState(), currency);
+        // Then
+        Assertions.assertEquals(adLabelDtos, actual);
+        Mockito.verify(advertisementRepository)
+            .findByCreator(userEntity.getUsername(), pageable, advertisementEntity.getState());
+        Mockito.verify(adUtil).convertAdvertisementEntityToLabelDto(advertisementEntity, currency);
+        Mockito.verifyNoMoreInteractions(advertisementRepository, adUtil);
+    }
+
+    @Test
+    public void testChangeStateShouldCallAdvertisementRepositoryIfInputIsValid()
+        throws UnknownAdvertisementException {
+        // Given
+        Mockito.when(advertisementRepository
+            .existsByIdAndAndCreator_Username(advertisementEntity.getId(), userEntity.getUsername()))
+            .thenReturn(true);
+        Mockito.when(advertisementRepository.findById(advertisementEntity.getId())).thenReturn(
+            Optional.ofNullable(advertisementEntity));
+        // When
+        underTest.changeState(advertisementEntity.getId(), AdState.ACTIVE, userEntity.getUsername());
+        // Then
+        Assertions.assertEquals(advertisementEntity.getState(), AdState.ACTIVE);
+        Mockito.verify(advertisementRepository)
+            .existsByIdAndAndCreator_Username(advertisementEntity.getId(), userEntity.getUsername());
+        Mockito.verify(advertisementRepository).findById(advertisementEntity.getId());
+        Mockito.verify(advertisementRepository).save(advertisementEntity);
+        Mockito.verifyNoMoreInteractions(advertisementRepository);
+    }
+
+    @Test
+    public void testChangeStateShouldThrowUnknownAdvertisementExceptionIfAdNotExistsById() {
+        // Given
+        Mockito.when(advertisementRepository
+            .existsByIdAndAndCreator_Username(advertisementEntity.getId(), userEntity.getUsername()))
+            .thenReturn(true);
+        Mockito.when(advertisementRepository.findById(advertisementEntity.getId())).thenReturn(
+            Optional.empty());
+        // When
+        Assertions.assertThrows(UnknownAdvertisementException.class,
+            () -> underTest.changeState(advertisementEntity.getId(), AdState.ACTIVE, userEntity.getUsername()));
+        // Then
+        Mockito.verify(advertisementRepository)
+            .existsByIdAndAndCreator_Username(advertisementEntity.getId(), userEntity.getUsername());
+        Mockito.verify(advertisementRepository).findById(advertisementEntity.getId());
+        Mockito.verifyNoMoreInteractions(advertisementRepository);
     }
 
 }
