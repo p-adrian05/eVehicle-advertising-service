@@ -331,43 +331,43 @@ insert into AD_DETAILS(AD_ID, DESCRIPTION, RANGE, WEIGHT, ACCELARATION, MAX_SPEE
 insert into AD_DETAILS(AD_ID, DESCRIPTION, RANGE, WEIGHT, ACCELARATION, MAX_SPEED, COLOR)
  VALUES (7,'Desc7',654,1233,12,311,'gold');
 
--- insert into IMAGES (PATH, UPLOADED_TIME)
--- values ('/1220/ad1_1.jpg',sysdate());
--- insert into IMAGES ( PATH, UPLOADED_TIME)
--- values ('/1220/ad1_2.jpg',sysdate());
--- insert into IMAGES (PATH, UPLOADED_TIME)
--- values ('/1220/ad2_1.jpg',sysdate());
--- insert into IMAGES (PATH, UPLOADED_TIME)
--- values ('/1220/ad3_1.jpg',sysdate());
--- insert into IMAGES (PATH, UPLOADED_TIME)
--- values ('/1220/ad3_2.jpg',sysdate());
--- insert into IMAGES (PATH, UPLOADED_TIME)
--- values ('/1220/ad3_3.jpg',sysdate());
--- insert into IMAGES (PATH, UPLOADED_TIME)
--- values ('/1220/ad4_1.jpg',sysdate());
--- insert into IMAGES (PATH, UPLOADED_TIME)
--- values ('/1220/ad5_1.jpg',sysdate());
--- insert into IMAGES (PATH, UPLOADED_TIME)
--- values ('/1220/ad6_1.jpg',sysdate());
---
--- insert into AD_IMAGES (AD_ID,IMAGE_ID)
--- values (1,2);
--- insert into AD_IMAGES (AD_ID,IMAGE_ID)
--- values (1,3);
--- insert into AD_IMAGES (AD_ID,IMAGE_ID)
--- values (2,4);
--- insert into AD_IMAGES (AD_ID,IMAGE_ID)
--- values (3,5);
--- insert into AD_IMAGES (AD_ID,IMAGE_ID)
--- values (3,6);
--- insert into AD_IMAGES (AD_ID,IMAGE_ID)
--- values (3,7);
--- insert into AD_IMAGES (AD_ID,IMAGE_ID)
--- values (4,8);
--- insert into AD_IMAGES (AD_ID,IMAGE_ID)
--- values (5,9);
--- insert into AD_IMAGES (AD_ID,IMAGE_ID)
--- values (6,10);
+insert into IMAGES (PATH, UPLOADED_TIME)
+values ('1220/ad1_1.jpg',sysdate());
+insert into IMAGES ( PATH, UPLOADED_TIME)
+values ('1220/ad1_2.jpg',sysdate());
+insert into IMAGES (PATH, UPLOADED_TIME)
+values ('1220/ad2_1.jpg',sysdate());
+insert into IMAGES (PATH, UPLOADED_TIME)
+values ('1220/ad3_1.jpg',sysdate());
+insert into IMAGES (PATH, UPLOADED_TIME)
+values ('1220/ad3_2.jpg',sysdate());
+insert into IMAGES (PATH, UPLOADED_TIME)
+values ('1220/ad3_3.jpg',sysdate());
+insert into IMAGES (PATH, UPLOADED_TIME)
+values ('1220/ad4_1.jpg',sysdate());
+insert into IMAGES (PATH, UPLOADED_TIME)
+values ('1220/ad5_1.jpg',sysdate());
+insert into IMAGES (PATH, UPLOADED_TIME)
+values ('1220/ad6_1.jpg',sysdate());
+
+insert into AD_IMAGES (AD_ID,IMAGE_ID)
+values (1,2);
+insert into AD_IMAGES (AD_ID,IMAGE_ID)
+values (1,3);
+insert into AD_IMAGES (AD_ID,IMAGE_ID)
+values (2,4);
+insert into AD_IMAGES (AD_ID,IMAGE_ID)
+values (3,5);
+insert into AD_IMAGES (AD_ID,IMAGE_ID)
+values (3,6);
+insert into AD_IMAGES (AD_ID,IMAGE_ID)
+values (3,7);
+insert into AD_IMAGES (AD_ID,IMAGE_ID)
+values (4,8);
+insert into AD_IMAGES (AD_ID,IMAGE_ID)
+values (5,9);
+insert into AD_IMAGES (AD_ID,IMAGE_ID)
+values (6,10);
 
 insert into SAVED_ADS (USER_ID, AD_ID)
 values (1,3);
