@@ -1,7 +1,12 @@
 
 # eVehicle advertising Rest Api
 - Built with Spring Boot
+## Requirements
+
+Building the project requires JDK 11 or later and [Apache Maven](https://maven.apache.org/).
+
 ## Commands:
+
 - mvn package
 ### Start with in-memory db :
  (initial user credentials: username: admin, password: admin)
