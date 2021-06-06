@@ -1,0 +1,20 @@
+version: "3.9"
+services:
+  mysql_db:
+    image: mysql:latest
+    ports:
+      - "3306:3306"
+    expose:
+      - "3306"
+    hostname: mysql_db
+    environment:
+      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_DATABASE: advertising_service
+  web-app:
+    build: .
+    restart: on-failure
+    ports:
+      - 8080:8080
+    hostname: web-app
+    depends_on:
+      - mysql_db
