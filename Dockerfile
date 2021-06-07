@@ -12,5 +12,6 @@ RUN mvn clean package
 FROM openjdk:11-jre-slim
 WORKDIR /home/app
 COPY --from=build /home/webserver/eVehicle-advertising-service/target/eVehicle-advertising-service-0.0.1-SNAPSHOT.jar ./
+COPY --from=build /home/webserver/wait-for-it.sh ./
 EXPOSE 8080
-ENTRYPOINT ["java","-jar","-Dspring.profiles.active=prod","eVehicle-advertising-service-0.0.1-SNAPSHOT.jar"]
+ENTRYPOINT ["./wait-for-it.sh", "mysql_db:3306" , "--" ,"java","-jar","-Dspring.profiles.active=prod","eVehicle-advertising-service-0.0.1-SNAPSHOT.jar"]
