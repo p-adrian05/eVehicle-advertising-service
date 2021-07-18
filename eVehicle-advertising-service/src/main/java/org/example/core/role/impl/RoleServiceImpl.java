@@ -9,7 +9,6 @@ import org.example.core.role.exception.UnknownRoleException;
 import org.example.core.role.model.Role;
 import org.example.core.role.persistence.entity.RoleEntity;
 import org.example.core.role.persistence.repository.RoleRepository;
-import org.example.core.user.UserCreateObserver;
 import org.example.core.user.persistence.entity.UserEntity;
 import org.example.core.user.persistence.repository.UserRepository;
 import org.springframework.stereotype.Service;
@@ -26,7 +25,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Slf4j
 @Service
-public class RoleServiceImpl implements RoleService, UserCreateObserver {
+public class RoleServiceImpl implements RoleService {
 
     private final RoleRepository roleRepository;
     private final UserRepository userRepository;
@@ -104,12 +103,7 @@ public class RoleServiceImpl implements RoleService, UserCreateObserver {
     }
 
     @Override
-    public void handleNewUser(UserEntity userEntity) {
-        Objects.requireNonNull(userEntity, "UserEntity cannot be null");
-        userEntity.setRoles(Set.of(queryDefaultRole()));
-    }
-
-    private RoleEntity queryDefaultRole(){
+    public RoleEntity queryDefaultRole(){
         Optional<RoleEntity> roleEntity = roleRepository.findRoleEntityByRoleName(Role.defaultRole());
         if(roleEntity.isEmpty()){
             return roleRepository.save(RoleEntity.builder().roleName(Role.defaultRole()).build());

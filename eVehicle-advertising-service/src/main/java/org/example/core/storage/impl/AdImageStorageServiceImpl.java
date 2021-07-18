@@ -44,8 +44,8 @@ public class AdImageStorageServiceImpl implements AdImageStorageService {
 
     private Path generateFolderName(){
         LocalDate date = LocalDate.now();
-        String month = "";
-        String dayOfMonth = "";
+        String month;
+        String dayOfMonth;
         if(date.getMonth().getValue()<10){
             month = "0"+date.getMonth().getValue();
         }else{

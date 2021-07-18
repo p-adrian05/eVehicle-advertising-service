@@ -4,6 +4,7 @@ import org.example.core.image.persistence.entity.ImageEntity;
 
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 public interface ImageService {
@@ -14,4 +15,5 @@ public interface ImageService {
 
     Set<ImageEntity> createImageEntities(Set<Path> paths);
 
+    ImageEntity queryDefaultProfileImageEntity();
 }

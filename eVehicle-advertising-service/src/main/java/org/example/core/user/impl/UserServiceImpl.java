@@ -4,6 +4,7 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.core.image.model.ImageDto;
+import org.example.core.user.UserRegistrationService;
 import org.example.core.user.UserService;
 import org.example.core.user.exception.EmailAlreadyExistsException;
 import org.example.core.user.exception.UnknownUserException;
@@ -13,15 +14,11 @@ import org.example.core.user.model.CreatedUserDto;
 import org.example.core.user.model.UserDto;
 import org.example.core.user.persistence.entity.UserEntity;
 import org.example.core.user.persistence.repository.UserRepository;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
-import java.sql.Timestamp;
-import java.util.Date;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.UUID;
 
 @RequiredArgsConstructor
 @Slf4j
@@ -29,8 +26,7 @@ import java.util.UUID;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
-    private final UserCreateObservable userCreateObservable;
+    private final UserRegistrationService userRegistrationService;
     private final UserAfterCreatedObservable userAfterCreatedObservable;
 
     @Override
@@ -46,8 +42,7 @@ public class UserServiceImpl implements UserService {
         if(userRepository.existsUserEntityByEmail(createUserDto.getEmail())){
             throw new EmailAlreadyExistsException(String.format("Email already exists: %s",createUserDto.getEmail()));
         }
-        UserEntity userEntity = createNewUserEntity(createUserDto);
-        userCreateObservable.broadCastUser(userEntity);
+        UserEntity userEntity = userRegistrationService.registerUser(createUserDto);
         UserEntity savedUserEntity  = userRepository.save(userEntity);
         userAfterCreatedObservable.broadCastUser(CreatedUserDto.builder()
             .userId(savedUserEntity.getId())
@@ -106,21 +101,6 @@ public class UserServiceImpl implements UserService {
                 .build())
             .lastLogin(userEntity.getLastLogin())
             .build();
-    }
-
-
-    private UserEntity createNewUserEntity(CreateUserDto createUserDto) {
-       String hashedPassword = passwordEncoder.encode(createUserDto.getPassword());
-       String activationCode = UUID.randomUUID() + createUserDto.getUsername();
-        return UserEntity.builder()
-             .username(createUserDto.getUsername())
-             .password(hashedPassword)
-             .created(new Timestamp(new Date().getTime()))
-             .activation(activationCode)
-             .email(createUserDto.getEmail())
-             .enabled(false)
-             .lastLogin(null)
-             .build();
     }
     private Optional<UserDto> convertUserEntityToDto(Optional<UserEntity> userEntity) {
         return userEntity.map(this::convertUserEntityToUserDto);

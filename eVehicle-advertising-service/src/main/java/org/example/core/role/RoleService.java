@@ -4,6 +4,7 @@ import org.example.core.role.exception.RoleAlreadyExistsException;
 import org.example.core.role.exception.RoleModificationException;
 import org.example.core.role.exception.UnknownRoleException;
 import org.example.core.role.model.Role;
+import org.example.core.role.persistence.entity.RoleEntity;
 import org.example.core.user.exception.UnknownUserException;
 
 import java.util.List;
@@ -22,4 +23,5 @@ public interface RoleService {
 
     List<Role> readRoles();
 
+    RoleEntity queryDefaultRole();
 }
