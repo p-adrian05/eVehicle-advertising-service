@@ -10,18 +10,19 @@ import org.example.core.advertising.exception.UnknownCategoryException;
 import org.example.core.advertising.model.AdDetailsDto;
 import org.example.core.advertising.model.AdLabelDto;
 import org.example.core.advertising.model.AdvertisementDto;
+import org.example.core.advertising.model.BasicAdDetails;
 import org.example.core.advertising.model.CreateAdDto;
 import org.example.core.advertising.model.UpdateAdvertisementDto;
 import org.example.core.advertising.persistence.AdState;
 import org.example.core.advertising.persistence.entity.AdvertisementEntity;
-import org.example.core.advertising.persistence.entity.CategoryEntity;
-import org.example.core.advertising.persistence.entity.TypeEntity;
+import org.example.core.advertising.persistence.entity.BasicAdDetailsEntity;
 import org.example.core.advertising.persistence.repository.AdvertisementQueryParams;
 import org.example.core.advertising.persistence.repository.AdvertisementRepository;
-import org.example.core.image.AdImageService;
+import org.example.core.finance.bank.Bank;
+import org.example.core.finance.money.Money;
+import org.example.core.image.persistence.entity.ImageEntity;
 import org.example.core.security.AuthException;
 import org.example.core.user.exception.UnknownUserException;
-import org.example.core.user.persistence.entity.UserEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -29,11 +30,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.transaction.Transactional;
-import java.sql.Timestamp;
 import java.util.Currency;
-import java.util.Date;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Service
@@ -42,9 +42,9 @@ public class AdvertisementServiceImpl implements AdvertisementService {
 
 
     private final AdvertisementRepository advertisementRepository;
-    private final AdImageService adImageService;
-    private final AdUtil adUtil;
+    private final AdEntityBuilder adEntityBuilder;
     private final AdDetailsService adDetailsService;
+    private final Bank bank;
 
     @Override
     @Transactional
@@ -54,8 +54,7 @@ public class AdvertisementServiceImpl implements AdvertisementService {
         Objects.requireNonNull(advertisementDto, "AdvertisementDto cannot be null during creation");
         Objects.requireNonNull(adDetailsDto, "AdDetailsDto cannot be null during creation");
         Objects.requireNonNull(imageFiles, "ImageFile array cannot be null");
-        AdvertisementEntity advertisementEntity = createNewAdvertisement(advertisementDto);
-        advertisementEntity.setImages(adImageService.store(imageFiles));
+        AdvertisementEntity advertisementEntity = adEntityBuilder.createNewAdvertisement(advertisementDto,imageFiles);
         AdvertisementEntity newAdvertisementEntity = advertisementRepository.save(advertisementEntity);
         log.info("New advertisementEntity: {}", newAdvertisementEntity);
 
@@ -71,20 +70,10 @@ public class AdvertisementServiceImpl implements AdvertisementService {
         Objects.requireNonNull(adDetails, "AdDetailsDto cannot be null during update");
         Objects.requireNonNull(imageFiles, "ImageFile array cannot be null");
 
-        AdvertisementEntity advertisementEntity = queryAdvertisementEntity(advertisementDto.getId());
-        CategoryEntity categoryEntity = adUtil.queryCategory(advertisementDto.getCategory());
-        TypeEntity typeEntity = adUtil.getTypeEntity(advertisementDto.getType());
-        typeEntity.setBrandEntity(adUtil.getBrandEntity(advertisementDto.getBrand()));
-        advertisementEntity.setCategory(categoryEntity);
-        advertisementEntity.setType(typeEntity);
-        advertisementEntity.setProductCondition(advertisementDto.getCondition());
-        advertisementEntity.setTitle(advertisementDto.getTitle());
-        advertisementEntity.setPrice(advertisementDto.getPrice());
-        advertisementEntity.setCurrency(Currency.getInstance(advertisementDto.getCurrency()).getCurrencyCode());
-        advertisementEntity.setImages(adImageService.updateAndStore(advertisementEntity.getImages(), imageFiles));
+        AdvertisementEntity updatedAdvertisementEntity = adEntityBuilder.createUpdatedAdvertisement(advertisementDto,imageFiles);
         adDetailsService.updateAdDetails(adDetails);
-        advertisementRepository.save(advertisementEntity);
-        log.info("Updated advertisementEntity: {}", advertisementEntity);
+        advertisementRepository.save(updatedAdvertisementEntity);
+        log.info("Updated advertisementEntity: {}", updatedAdvertisementEntity);
     }
 
     @Override
@@ -94,7 +83,7 @@ public class AdvertisementServiceImpl implements AdvertisementService {
         if (advertisementEntity.isEmpty()) {
             return Optional.empty();
         }
-        return Optional.of(adUtil.convertAdvertisementEntityToDto(advertisementEntity.get(),currency));
+        return Optional.of(convertAdvertisementEntityToDto(advertisementEntity.get(),currency));
     }
 
     @Override
@@ -107,7 +96,7 @@ public class AdvertisementServiceImpl implements AdvertisementService {
         Objects.requireNonNull(params, "AdvertisementQueryParams cannot be null");
         Objects.requireNonNull(pageable, "Pageable cannot be null");
         return advertisementRepository.findByParams(params, pageable)
-            .map(advertisementEntity -> adUtil.convertAdvertisementEntityToLabelDto(advertisementEntity, currency));
+            .map(advertisementEntity -> convertAdvertisementEntityToLabelDto(advertisementEntity, currency));
     }
 
     @Override
@@ -117,8 +106,7 @@ public class AdvertisementServiceImpl implements AdvertisementService {
         Objects.requireNonNull(pageable, "Pageable cannot be null");
         Objects.requireNonNull(state, "AdState cannot be null");
         return advertisementRepository.findByCreator(username, pageable, state)
-            .map(advertisementEntity -> adUtil
-                .convertAdvertisementEntityToLabelDto(advertisementEntity, currency));
+            .map(advertisementEntity -> convertAdvertisementEntityToLabelDto(advertisementEntity, currency));
     }
 
     @Override
@@ -128,7 +116,7 @@ public class AdvertisementServiceImpl implements AdvertisementService {
         if (!advertisementRepository.existsByIdAndAndCreator_Username(adId, creatorName)) {
             throw new AuthException("Access denied");
         }
-        AdvertisementEntity advertisementEntity = queryAdvertisementEntity(adId);
+        AdvertisementEntity advertisementEntity = adEntityBuilder.queryAdvertisementEntity(adId);
         log.info(String
             .format("Changing advertisement id: %s  state from %s to %s", adId, advertisementEntity.getState(),
                 stateToChange));
@@ -137,33 +125,62 @@ public class AdvertisementServiceImpl implements AdvertisementService {
     }
 
 
-    private AdvertisementEntity queryAdvertisementEntity(int id) throws UnknownAdvertisementException {
-        Optional<AdvertisementEntity> advertisementEntity = advertisementRepository.findById(id);
-        if (advertisementEntity.isEmpty()) {
-            throw new UnknownAdvertisementException(String.format("Advertisement not found by id: %s", id));
-        }
-        log.info("Queried advertisement : {}", advertisementEntity);
-        return advertisementEntity.get();
+
+
+    AdLabelDto convertAdvertisementEntityToLabelDto(AdvertisementEntity advertisementEntity, Currency currency) {
+        Objects.requireNonNull(advertisementEntity, "AdvertisementEntity cannot be null during converting");
+        Objects.requireNonNull(advertisementEntity.getCurrency(), "Currency cannot be null during converting");
+        Money money = new Money(advertisementEntity.getPrice(), Currency.getInstance(advertisementEntity.getCurrency()))
+            .to(currency, bank);
+        return AdLabelDto.builder()
+            .id(advertisementEntity.getId())
+            .price(money.getAmount())
+            .brand(advertisementEntity.getType().getBrandEntity().getBrandName())
+            .condition(advertisementEntity.getProductCondition())
+            .created(advertisementEntity.getCreated())
+            .title(advertisementEntity.getTitle())
+            .state(advertisementEntity.getState())
+            .type(advertisementEntity.getType().getName())
+            .currency(money.getCurrency().getCurrencyCode())
+            .imagePaths(advertisementEntity.getImages().stream()
+                .map(ImageEntity::getPath).collect(Collectors.toList()))
+            .basicAdDetails(convertBasicAdDetailsEntityToModel(advertisementEntity.getBasicAdDetails()))
+            .build();
     }
 
-    private AdvertisementEntity createNewAdvertisement(CreateAdDto advertisementDto)
-        throws UnknownCategoryException, UnknownUserException {
-        Objects.requireNonNull(advertisementDto, "CreateAdDto cannot be null during creation");
-        UserEntity userEntity = adUtil.queryUserEntity(advertisementDto.getCreator());
-        CategoryEntity categoryEntity = adUtil.queryCategory(advertisementDto.getCategory());
-        TypeEntity typeEntity = adUtil.getTypeEntity(advertisementDto.getType());
-        typeEntity.setBrandEntity(adUtil.getBrandEntity(advertisementDto.getBrand()));
+    BasicAdDetails convertBasicAdDetailsEntityToModel(BasicAdDetailsEntity basicAdDetailsEntity) {
+        Objects.requireNonNull(basicAdDetailsEntity, "BasicAdDetailsEntity cannot be null during converting");
+        return BasicAdDetails.builder()
+            .adId(basicAdDetailsEntity.getAdId())
+            .year(basicAdDetailsEntity.getYear())
+            .batterySize(basicAdDetailsEntity.getBatterySize())
+            .chargeSpeed(basicAdDetailsEntity.getChargeSpeed())
+            .seatNumber(basicAdDetailsEntity.getSeatNumber())
+            .performance(basicAdDetailsEntity.getPerformance())
+            .km(basicAdDetailsEntity.getKm())
+            .drive(basicAdDetailsEntity.getDrive())
+            .build();
+    }
 
-        return AdvertisementEntity.builder()
-            .creator(userEntity)
-            .category(categoryEntity)
-            .type(typeEntity)
-            .title(advertisementDto.getTitle())
-            .productCondition(advertisementDto.getCondition())
-            .state(AdState.ACTIVE)
-            .created(new Timestamp(new Date().getTime()))
-            .price(advertisementDto.getPrice())
-            .currency(Currency.getInstance(advertisementDto.getCurrency()).getCurrencyCode())
+    AdvertisementDto convertAdvertisementEntityToDto(AdvertisementEntity advertisementEntity,Currency currency) {
+        Objects.requireNonNull(advertisementEntity, "AdvertisementEntity cannot be null during converting");
+        Objects.requireNonNull(advertisementEntity.getCurrency(), "Currency cannot be null during converting");
+        Money money = new Money(advertisementEntity.getPrice(), Currency.getInstance(advertisementEntity.getCurrency()))
+            .to(currency, bank);
+        return AdvertisementDto.builder()
+            .id(advertisementEntity.getId())
+            .price(money.getAmount())
+            .currency(money.getCurrency().getCurrencyCode())
+            .creator(advertisementEntity.getCreator().getUsername())
+            .category(advertisementEntity.getCategory().getName())
+            .brand(advertisementEntity.getType().getBrandEntity().getBrandName())
+            .condition(advertisementEntity.getProductCondition())
+            .created(advertisementEntity.getCreated())
+            .title(advertisementEntity.getTitle())
+            .state(advertisementEntity.getState())
+            .type(advertisementEntity.getType().getName())
+            .imagePaths(advertisementEntity.getImages().stream()
+                .map(ImageEntity::getPath).collect(Collectors.toSet()))
             .build();
     }
 }

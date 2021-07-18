@@ -11,7 +11,6 @@ import org.example.core.advertising.model.UpdateAdvertisementDto;
 import org.example.core.advertising.persistence.AdState;
 import org.example.core.advertising.persistence.repository.AdvertisementQueryParams;
 import org.example.core.user.exception.UnknownUserException;
-import org.springframework.beans.propertyeditors.CurrencyEditor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;

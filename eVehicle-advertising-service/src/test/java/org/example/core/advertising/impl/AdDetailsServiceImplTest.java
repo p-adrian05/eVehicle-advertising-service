@@ -19,7 +19,7 @@ public class AdDetailsServiceImplTest {
 
     private AdDetailsRepository adDetailsRepository;
     private BasicAdDetailsRepository basicAdDetailsRepository;
-    private AdUtil adUtil;
+
 
     private AdDetailsServiceImpl underTest;
 
@@ -66,8 +66,7 @@ public class AdDetailsServiceImplTest {
     public void init() {
         adDetailsRepository = Mockito.mock(AdDetailsRepository.class);
         basicAdDetailsRepository = Mockito.mock(BasicAdDetailsRepository.class);
-        adUtil = Mockito.mock(AdUtil.class);
-        underTest = new AdDetailsServiceImpl(adDetailsRepository, basicAdDetailsRepository, adUtil);
+        underTest = new AdDetailsServiceImpl(adDetailsRepository, basicAdDetailsRepository);
     }
 
     @Test
@@ -75,8 +74,6 @@ public class AdDetailsServiceImplTest {
         throws UnknownAdvertisementException {
         // Given
         Mockito.when(adDetailsRepository.existsById(adDetailsDto.getAdId())).thenReturn(true);
-        Mockito.when(adUtil.convertAdDetailsToAdDetailsEntity(adDetailsDto)).thenReturn(adDetailsEntity);
-        Mockito.when(adUtil.convertAdDetailsToBasicAdDetailsEntity(adDetailsDto)).thenReturn(basicAdDetailsEntity);
 
         // When
         underTest.updateAdDetails(adDetailsDto);
@@ -104,15 +101,11 @@ public class AdDetailsServiceImplTest {
     @Test
     public void testCreateAdDetailsShouldCallAdDetailsRepositoryAndBasicAdDetailsRepository() {
         // Given
-        Mockito.when(adUtil.convertAdDetailsToAdDetailsEntity(adDetailsDto)).thenReturn(adDetailsEntity);
-        Mockito.when(adUtil.convertAdDetailsToBasicAdDetailsEntity(adDetailsDto)).thenReturn(basicAdDetailsEntity);
-
         // When
         underTest.createAdDetails(adDetailsDto, advertisementEntity);
 
         // Then
-        Assertions.assertEquals(basicAdDetailsEntity.getAdvertisement(), advertisementEntity);
-        Assertions.assertEquals(adDetailsEntity.getAdvertisement(), advertisementEntity);
+
         Mockito.verify(adDetailsRepository).save(adDetailsEntity);
         Mockito.verify(basicAdDetailsRepository).save(basicAdDetailsEntity);
         Mockito.verifyNoMoreInteractions(adDetailsRepository, basicAdDetailsRepository);

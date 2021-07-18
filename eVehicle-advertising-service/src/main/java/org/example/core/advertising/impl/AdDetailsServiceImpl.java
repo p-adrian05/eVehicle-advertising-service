@@ -22,7 +22,6 @@ public class AdDetailsServiceImpl implements AdDetailsService {
 
     private final AdDetailsRepository adDetailsRepository;
     private final BasicAdDetailsRepository basicAdDetailsRepository;
-    private final AdUtil adUtil;
 
     @Override
     public Optional<AdDetailsDto> getAdDetailsById(int id) {
@@ -54,22 +53,48 @@ public class AdDetailsServiceImpl implements AdDetailsService {
             throw new UnknownAdvertisementException(
                 String.format("Advertisement not found by id: %s", adDetailsDto.getAdId()));
         }
-        adDetailsRepository.save(adUtil.convertAdDetailsToAdDetailsEntity(adDetailsDto));
-        basicAdDetailsRepository.save(adUtil.convertAdDetailsToBasicAdDetailsEntity(adDetailsDto));
+        adDetailsRepository.save(convertAdDetailsToAdDetailsEntity(adDetailsDto));
+        basicAdDetailsRepository.save(convertAdDetailsToBasicAdDetailsEntity(adDetailsDto));
         log.info("Updated AdDetails: {}", adDetailsDto);
     }
 
     public void createAdDetails(AdDetailsDto adDetailsDto, AdvertisementEntity advertisementEntity){
         Objects.requireNonNull(adDetailsDto, "AdDetailsDto cannot be null during update process");
         Objects.requireNonNull(advertisementEntity, "AdvertisementEntity cannot be null during creating ad details entity");
-        BasicAdDetailsEntity basicAdDetailsEntity = adUtil.convertAdDetailsToBasicAdDetailsEntity(adDetailsDto);
+        BasicAdDetailsEntity basicAdDetailsEntity = convertAdDetailsToBasicAdDetailsEntity(adDetailsDto);
         basicAdDetailsEntity.setAdvertisement(advertisementEntity);
         basicAdDetailsRepository.save(basicAdDetailsEntity);
 
-        AdDetailsEntity adDetailsEntity = adUtil.convertAdDetailsToAdDetailsEntity(adDetailsDto);
+        AdDetailsEntity adDetailsEntity = convertAdDetailsToAdDetailsEntity(adDetailsDto);
         adDetailsEntity.setAdvertisement(advertisementEntity);
         adDetailsRepository.save(adDetailsEntity);
         log.info("Created AdDetails: {}", adDetailsDto);
     }
 
+    AdDetailsEntity convertAdDetailsToAdDetailsEntity(AdDetailsDto adDetails) {
+        Objects.requireNonNull(adDetails, "AdDetailsDto cannot be null during converting");
+        return AdDetailsEntity.builder()
+            .adId(adDetails.getAdId())
+            .maxSpeed(adDetails.getMaxSpeed())
+            .productRange(adDetails.getRange())
+            .weight(adDetails.getWeight())
+            .accelaration(adDetails.getAccelaration())
+            .color(adDetails.getColor())
+            .description(adDetails.getDescription())
+            .build();
+    }
+
+    BasicAdDetailsEntity convertAdDetailsToBasicAdDetailsEntity(AdDetailsDto adDetails) {
+        Objects.requireNonNull(adDetails, "AdDetailsDto cannot be null during converting");
+        return BasicAdDetailsEntity.builder()
+            .adId(adDetails.getAdId())
+            .performance(adDetails.getPerformance())
+            .batterySize(adDetails.getBatterySize())
+            .km(adDetails.getKm())
+            .chargeSpeed(adDetails.getChargeSpeed())
+            .drive(adDetails.getDrive())
+            .seatNumber(adDetails.getSeatNumber())
+            .year(adDetails.getYear())
+            .build();
+    }
 }

@@ -13,12 +13,15 @@ import org.example.core.advertising.persistence.AdState;
 import org.example.core.advertising.persistence.Drive;
 import org.example.core.advertising.persistence.ProductState;
 import org.example.core.advertising.persistence.entity.AdvertisementEntity;
+import org.example.core.advertising.persistence.entity.BasicAdDetailsEntity;
 import org.example.core.advertising.persistence.entity.BrandEntity;
 import org.example.core.advertising.persistence.entity.CategoryEntity;
 import org.example.core.advertising.persistence.entity.TypeEntity;
 import org.example.core.advertising.persistence.repository.AdvertisementQueryParams;
 import org.example.core.advertising.persistence.repository.AdvertisementRepository;
-import org.example.core.image.AdImageService;
+import org.example.core.finance.bank.Bank;
+import org.example.core.finance.bank.staticbank.impl.StaticBank;
+import org.example.core.finance.bank.staticbank.model.StaticExchangeRates;
 import org.example.core.image.persistence.entity.ImageEntity;
 import org.example.core.user.exception.UnknownUserException;
 import org.example.core.user.persistence.entity.UserEntity;
@@ -37,7 +40,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.sql.Timestamp;
 import java.util.Currency;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -46,9 +48,9 @@ import java.util.stream.Collectors;
 public class AdvertisementServiceImplTest {
 
     private AdvertisementRepository advertisementRepository;
-    private AdImageService adImageService;
-    private AdUtil adUtil;
+    private AdEntityBuilder adEntityBuilder;
     private AdDetailsService adDetailsService;
+    private Bank bank;
 
 
     private AdvertisementServiceImpl underTest;
@@ -96,17 +98,23 @@ public class AdvertisementServiceImplTest {
         .build();
     private TypeEntity typeEntity = TypeEntity.builder()
         .name(createAdDto.getType())
+        .brandEntity(brandEntity)
         .build();
     CategoryEntity categoryEntity = CategoryEntity.builder()
         .name(createAdDto.getCategory())
         .build();
     private AdvertisementEntity advertisementEntity = AdvertisementEntity.builder()
         .creator(userEntity)
+        .id(0)
         .category(categoryEntity)
         .type(typeEntity)
         .title(createAdDto.getTitle())
         .productCondition(createAdDto.getCondition())
         .state(AdState.ACTIVE)
+        .basicAdDetails(BasicAdDetailsEntity.builder()
+            .adId(0)
+            .batterySize(12)
+            .build())
         .images(Set.of(new ImageEntity()))
         .created(new Timestamp(1))
         .price(createAdDto.getPrice())
@@ -154,169 +162,129 @@ public class AdvertisementServiceImplTest {
     @BeforeEach
     public void init() {
         advertisementRepository = Mockito.mock(AdvertisementRepository.class);
-        adImageService = Mockito.mock(AdImageService.class);
+        bank = StaticBank.of(() -> new StaticExchangeRates.Builder()
+            .addRate("HUF", "EUR", 0.0029, 346)
+            .addRate("HUF", "USD", 0.0035, 283)
+            .addRate("EUR", "USD", 1.22, 0.82)
+            .build());
+        adEntityBuilder = Mockito.mock(AdEntityBuilder.class);
         adDetailsService = Mockito.mock(AdDetailsService.class);
-        adUtil = Mockito.mock(AdUtil.class);
-        underTest = new AdvertisementServiceImpl(advertisementRepository, adImageService, adUtil, adDetailsService);
+        underTest = new AdvertisementServiceImpl(advertisementRepository, adEntityBuilder, adDetailsService,bank);
     }
 
     @Test
     public void testCreateAdvertisementShouldCallAdvertisementRepository()
         throws FileUploadException, UnknownCategoryException, UnknownUserException {
         // Given
-        Mockito.when(adImageService.store(new MultipartFile[] {})).thenReturn(Set.of(new ImageEntity()));
-        Mockito.when(adUtil.queryUserEntity(createAdDto.getCreator())).thenReturn(userEntity);
-        Mockito.when(adUtil.queryCategory(createAdDto.getCategory())).thenReturn(categoryEntity);
-        Mockito.when(adUtil.getTypeEntity(createAdDto.getType())).thenReturn(typeEntity);
         Mockito.when(advertisementRepository.save(advertisementEntity)).thenReturn(advertisementEntity);
-        Mockito.when(adUtil.getBrandEntity(createAdDto.getBrand())).thenReturn(brandEntity);
+        Mockito.when(adEntityBuilder.createNewAdvertisement(createAdDto,new MultipartFile[] {})).thenReturn(advertisementEntity);
         // When
         underTest.createAdvertisement(createAdDto, adDetailsDto, new MultipartFile[] {});
 
         // Then
-        Assertions.assertEquals(typeEntity.getBrandEntity(), brandEntity);
-        Mockito.verify(adImageService).store(new MultipartFile[] {});
-        Mockito.verify(adUtil).queryUserEntity(createAdDto.getCreator());
-        Mockito.verify(adUtil).queryCategory(createAdDto.getCategory());
-        Mockito.verify(adUtil).getTypeEntity(createAdDto.getType());
-        Mockito.verify(adUtil).getBrandEntity(createAdDto.getBrand());
+        Mockito.verify(adEntityBuilder).createNewAdvertisement(createAdDto,new MultipartFile[] {});
         Mockito.verify(adDetailsService).createAdDetails(adDetailsDto, advertisementEntity);
         Mockito.verify(advertisementRepository).save(advertisementEntity);
-        Mockito.verifyNoMoreInteractions(adImageService, adUtil, adDetailsService, advertisementRepository);
+        Mockito.verifyNoMoreInteractions(adEntityBuilder,adDetailsService, advertisementRepository);
     }
 
     @Test
     public void testCreateAdvertisementShouldThrowUnknownCategoryExceptionWhenCategoryNotExists()
-        throws UnknownCategoryException, UnknownUserException {
+        throws UnknownCategoryException, UnknownUserException, FileUploadException {
         // Given
 
-        Mockito.when(adUtil.queryUserEntity(createAdDto.getCreator())).thenReturn(userEntity);
-        Mockito.when(adUtil.queryCategory(createAdDto.getCategory())).thenThrow(UnknownCategoryException.class);
+        Mockito.when(adEntityBuilder.createNewAdvertisement(createAdDto,new MultipartFile[]{})).thenThrow(UnknownCategoryException.class);
         // When
         Assertions.assertThrows(UnknownCategoryException.class,
             () -> underTest.createAdvertisement(createAdDto, adDetailsDto, new MultipartFile[] {}));
         // Then
-        Mockito.verify(adUtil).queryUserEntity(createAdDto.getCreator());
-        Mockito.verify(adUtil).queryCategory(createAdDto.getCategory());
-        Mockito.verifyNoMoreInteractions(adImageService, adUtil, adDetailsService, advertisementRepository);
+        Mockito.verify(adEntityBuilder).createNewAdvertisement(createAdDto,new MultipartFile[]{});
+        Mockito.verifyNoMoreInteractions(adEntityBuilder,adDetailsService, advertisementRepository);
     }
 
     @Test
     public void testCreateAdvertisementShouldThrowUnknownUserExceptionWhenUserNotExists()
-        throws UnknownUserException {
+        throws UnknownUserException, UnknownCategoryException, FileUploadException {
         // Given
-        Mockito.when(adUtil.queryUserEntity(createAdDto.getCreator())).thenThrow(UnknownUserException.class);
+        Mockito.when(adEntityBuilder.createNewAdvertisement(createAdDto,new MultipartFile[]{})).thenThrow(UnknownUserException.class);
         // When
         Assertions.assertThrows(UnknownUserException.class,
             () -> underTest.createAdvertisement(createAdDto, adDetailsDto, new MultipartFile[] {}));
         // Then
-        Mockito.verify(adUtil).queryUserEntity(createAdDto.getCreator());
-        Mockito.verifyNoMoreInteractions(adImageService, adUtil, adDetailsService, advertisementRepository);
+        Mockito.verify(adEntityBuilder).createNewAdvertisement(createAdDto,new MultipartFile[]{});
+        Mockito.verifyNoMoreInteractions(adEntityBuilder,adDetailsService, advertisementRepository);
     }
 
     @Test
     public void testCreateAdvertisementShouldThrowFileUploadExceptionWhenFileCannotBeUploaded()
         throws UnknownUserException, FileUploadException, UnknownCategoryException {
         // Given
-        Mockito.when(adImageService.store(new MultipartFile[] {})).thenThrow(FileUploadException.class);
-        Mockito.when(adUtil.queryUserEntity(createAdDto.getCreator())).thenReturn(userEntity);
-        Mockito.when(adUtil.queryCategory(createAdDto.getCategory())).thenReturn(categoryEntity);
-        Mockito.when(adUtil.getTypeEntity(createAdDto.getType())).thenReturn(typeEntity);
+        Mockito.when(adEntityBuilder.createNewAdvertisement(createAdDto,new MultipartFile[]{})).thenThrow(FileUploadException.class);
         Mockito.when(advertisementRepository.save(advertisementEntity)).thenReturn(advertisementEntity);
-        Mockito.when(adUtil.getBrandEntity(createAdDto.getBrand())).thenReturn(brandEntity);
         // When
         Assertions.assertThrows(FileUploadException.class,
             () -> underTest.createAdvertisement(createAdDto, adDetailsDto, new MultipartFile[] {}));
         // Then
-        Assertions.assertEquals(typeEntity.getBrandEntity(), brandEntity);
-        Mockito.verify(adImageService).store(new MultipartFile[] {});
-        Mockito.verify(adUtil).queryUserEntity(createAdDto.getCreator());
-        Mockito.verify(adUtil).queryCategory(createAdDto.getCategory());
-        Mockito.verify(adUtil).getTypeEntity(createAdDto.getType());
-        Mockito.verify(adUtil).getBrandEntity(createAdDto.getBrand());
-        Mockito.verifyNoMoreInteractions(adImageService, adUtil, adDetailsService, advertisementRepository);
+        Mockito.verify(adEntityBuilder).createNewAdvertisement(createAdDto,new MultipartFile[]{});
+        Mockito.verifyNoMoreInteractions(adEntityBuilder,adDetailsService, advertisementRepository);
     }
 
     @Test
     public void testUpdateAdvertisementWithDetailsShouldCallAdvertisementRepository()
         throws UnknownCategoryException, FileUploadException, UnknownAdvertisementException {
         // Given
-        Mockito.when(advertisementRepository.findById(updateAdvertisementDto.getId()))
-            .thenReturn(Optional.of(advertisementEntity));
-        Mockito.when(adUtil.queryCategory(createAdDto.getCategory())).thenReturn(categoryEntity);
-        Mockito.when(adUtil.getTypeEntity(createAdDto.getType())).thenReturn(typeEntity);
-        Mockito.when(adUtil.getBrandEntity(createAdDto.getBrand())).thenReturn(brandEntity);
-        Mockito.when(
-            adImageService.updateAndStore(advertisementEntity.getImages(), new MultipartFile[] {}))
-            .thenReturn(Set.of(new ImageEntity()));
-
+        Mockito.when(adEntityBuilder.createUpdatedAdvertisement(updateAdvertisementDto,new MultipartFile[]{}))
+            .thenReturn(advertisementEntity);
         // When
         underTest.updateAdvertisementWithDetails(updateAdvertisementDto, adDetailsDto, new MultipartFile[] {});
         // Then
-        Mockito.verify(adImageService).updateAndStore(advertisementEntity.getImages(), new MultipartFile[] {});
-        Mockito.verify(advertisementRepository).findById(updateAdvertisementDto.getId());
-        Mockito.verify(adUtil).queryCategory(createAdDto.getCategory());
-        Mockito.verify(adUtil).getTypeEntity(createAdDto.getType());
-        Mockito.verify(adUtil).getBrandEntity(createAdDto.getBrand());
+        Mockito.verify(adEntityBuilder).createUpdatedAdvertisement(updateAdvertisementDto,new MultipartFile[]{});
         Mockito.verify(adDetailsService).updateAdDetails(adDetailsDto);
         Mockito.verify(advertisementRepository).save(advertisementEntity);
-        Mockito.verifyNoMoreInteractions(adImageService, adUtil, adDetailsService, advertisementRepository);
+        Mockito.verifyNoMoreInteractions(adEntityBuilder,adDetailsService, advertisementRepository);
     }
 
     @Test
-    public void testUpdateAdvertisementWithDetailsShouldThrowUnknownAdvertisementExceptionWhenAdNotExists() {
+    public void testUpdateAdvertisementWithDetailsShouldThrowUnknownAdvertisementExceptionWhenAdNotExists()
+        throws UnknownCategoryException, UnknownAdvertisementException, FileUploadException {
         // Given
-        Mockito.when(advertisementRepository.findById(updateAdvertisementDto.getId()))
-            .thenReturn(Optional.empty());
+        Mockito.when(adEntityBuilder.createUpdatedAdvertisement(updateAdvertisementDto,new MultipartFile[]{})).thenThrow(UnknownAdvertisementException.class);
+
         // When
         Assertions.assertThrows(UnknownAdvertisementException.class,
             () -> underTest
                 .updateAdvertisementWithDetails(updateAdvertisementDto, adDetailsDto, new MultipartFile[] {}));
         // Then
-        Mockito.verify(advertisementRepository).findById(updateAdvertisementDto.getId());
-        Mockito.verifyNoMoreInteractions(adImageService, adUtil, adDetailsService, advertisementRepository);
+        Mockito.verify(adEntityBuilder).createUpdatedAdvertisement(updateAdvertisementDto,new MultipartFile[]{});
+        Mockito.verifyNoMoreInteractions(adEntityBuilder,adDetailsService, advertisementRepository);
     }
 
     @Test
     public void testUpdateAdvertisementWithDetailsShouldThrowUnknownCategoryExceptionExceptionWhenCategoryNotExists()
-        throws UnknownCategoryException {
+        throws UnknownCategoryException, UnknownAdvertisementException, FileUploadException {
         // Given
-        Mockito.when(advertisementRepository.findById(updateAdvertisementDto.getId()))
-            .thenReturn(Optional.of(advertisementEntity));
-        Mockito.when(adUtil.queryCategory(createAdDto.getCategory())).thenThrow(UnknownCategoryException.class);
+        Mockito.when(adEntityBuilder.createUpdatedAdvertisement(updateAdvertisementDto,new MultipartFile[]{})).thenThrow(UnknownCategoryException.class);
         // When
         Assertions.assertThrows(UnknownCategoryException.class,
             () -> underTest
                 .updateAdvertisementWithDetails(updateAdvertisementDto, adDetailsDto, new MultipartFile[] {}));
         // Then
-        Mockito.verify(advertisementRepository).findById(updateAdvertisementDto.getId());
-        Mockito.verify(adUtil).queryCategory(createAdDto.getCategory());
-        Mockito.verifyNoMoreInteractions(adImageService, adUtil, adDetailsService, advertisementRepository);
+        Mockito.verify(adEntityBuilder).createUpdatedAdvertisement(updateAdvertisementDto,new MultipartFile[]{});
+        Mockito.verifyNoMoreInteractions(adEntityBuilder,adDetailsService, advertisementRepository);
     }
 
     @Test
     public void testUpdateAdvertisementWithDetailsShouldThrowFileUploadExceptionExceptionExceptionWhenFileCannotBeUploaded()
-        throws FileUploadException, UnknownCategoryException {
+        throws FileUploadException, UnknownCategoryException, UnknownAdvertisementException {
         // Given
-        Mockito.when(advertisementRepository.findById(updateAdvertisementDto.getId()))
-            .thenReturn(Optional.of(advertisementEntity));
-        Mockito.when(adUtil.queryCategory(createAdDto.getCategory())).thenReturn(categoryEntity);
-        Mockito.when(adUtil.getTypeEntity(createAdDto.getType())).thenReturn(typeEntity);
-        Mockito.when(adUtil.getBrandEntity(createAdDto.getBrand())).thenReturn(brandEntity);
-        Mockito.when(
-            adImageService.updateAndStore(advertisementEntity.getImages(), new MultipartFile[] {}))
-            .thenThrow(FileUploadException.class);
+        Mockito.when(adEntityBuilder.createUpdatedAdvertisement(updateAdvertisementDto,new MultipartFile[]{})).thenThrow(FileUploadException.class);
         // When
         Assertions.assertThrows(FileUploadException.class,
             () -> underTest
                 .updateAdvertisementWithDetails(updateAdvertisementDto, adDetailsDto, new MultipartFile[] {}));
         // Then
-        Mockito.verify(adImageService).updateAndStore(advertisementEntity.getImages(), new MultipartFile[] {});
-        Mockito.verify(advertisementRepository).findById(updateAdvertisementDto.getId());
-        Mockito.verify(adUtil).queryCategory(createAdDto.getCategory());
-        Mockito.verify(adUtil).getTypeEntity(createAdDto.getType());
-        Mockito.verify(adUtil).getBrandEntity(createAdDto.getBrand());
-        Mockito.verifyNoMoreInteractions(adImageService, adUtil, adDetailsService, advertisementRepository);
+        Mockito.verify(adEntityBuilder).createUpdatedAdvertisement(updateAdvertisementDto,new MultipartFile[]{});
+        Mockito.verifyNoMoreInteractions(adEntityBuilder,adDetailsService, advertisementRepository);
     }
 
     @Test
@@ -324,18 +292,13 @@ public class AdvertisementServiceImplTest {
         // Given
         Mockito.when(advertisementRepository.findByIdWithCategoryAndType(advertisementEntity.getId()))
             .thenReturn(Optional.of(advertisementEntity));
-        Mockito.when(adUtil.convertAdvertisementEntityToDto(advertisementEntity,
-            Currency.getInstance(advertisementEntity.getCurrency())))
-            .thenReturn(advertisementDto);
         // When
         Optional<AdvertisementDto> actual = underTest
             .getAdvertisementById(advertisementEntity.getId(), Currency.getInstance(advertisementEntity.getCurrency()));
         // Then
         Assertions.assertEquals(Optional.of(advertisementDto), actual);
         Mockito.verify(advertisementRepository).findByIdWithCategoryAndType(advertisementEntity.getId());
-        Mockito.verify(adUtil).convertAdvertisementEntityToDto(advertisementEntity,
-            Currency.getInstance(advertisementEntity.getCurrency()));
-        Mockito.verifyNoMoreInteractions(advertisementRepository, adUtil);
+        Mockito.verifyNoMoreInteractions(advertisementRepository);
     }
 
     @Test
@@ -377,16 +340,13 @@ public class AdvertisementServiceImplTest {
 
         Mockito.when(advertisementRepository.findByParams(advertisementQueryParams, pageable))
             .thenReturn(advertisementEntities);
-        Mockito.when(adUtil.convertAdvertisementEntityToLabelDto(advertisementEntity, currency))
-            .thenReturn(adLabelDto);
         // When
         Slice<AdLabelDto> actual = underTest
             .getAdvertisements(advertisementQueryParams, pageable, currency);
         // Then
-        Assertions.assertEquals(adLabelDtos, actual);
+        Assertions.assertEquals(adLabelDtos.getContent().size(), actual.getContent().size());
         Mockito.verify(advertisementRepository).findByParams(advertisementQueryParams, pageable);
-        Mockito.verify(adUtil).convertAdvertisementEntityToLabelDto(advertisementEntity, currency);
-        Mockito.verifyNoMoreInteractions(advertisementRepository, adUtil);
+        Mockito.verifyNoMoreInteractions(advertisementRepository);
     }
 
     @Test
@@ -400,17 +360,14 @@ public class AdvertisementServiceImplTest {
         Mockito.when(
             advertisementRepository.findByCreator(userEntity.getUsername(), pageable, advertisementEntity.getState()))
             .thenReturn(advertisementEntities);
-        Mockito.when(adUtil.convertAdvertisementEntityToLabelDto(advertisementEntity, currency))
-            .thenReturn(adLabelDto);
         // When
         Page<AdLabelDto> actual = underTest
             .getAdvertisementsByUsername(userEntity.getUsername(), pageable, advertisementEntity.getState(), currency);
         // Then
-        Assertions.assertEquals(adLabelDtos, actual);
+        Assertions.assertEquals(adLabelDtos.getContent().size(), actual.getContent().size());
         Mockito.verify(advertisementRepository)
             .findByCreator(userEntity.getUsername(), pageable, advertisementEntity.getState());
-        Mockito.verify(adUtil).convertAdvertisementEntityToLabelDto(advertisementEntity, currency);
-        Mockito.verifyNoMoreInteractions(advertisementRepository, adUtil);
+        Mockito.verifyNoMoreInteractions(advertisementRepository);
     }
 
     @Test
@@ -420,34 +377,34 @@ public class AdvertisementServiceImplTest {
         Mockito.when(advertisementRepository
             .existsByIdAndAndCreator_Username(advertisementEntity.getId(), userEntity.getUsername()))
             .thenReturn(true);
-        Mockito.when(advertisementRepository.findById(advertisementEntity.getId())).thenReturn(
-            Optional.ofNullable(advertisementEntity));
+        Mockito.when(adEntityBuilder.queryAdvertisementEntity(advertisementEntity.getId())).thenReturn(
+            advertisementEntity);
         // When
         underTest.changeState(advertisementEntity.getId(), AdState.ACTIVE, userEntity.getUsername());
         // Then
         Assertions.assertEquals(advertisementEntity.getState(), AdState.ACTIVE);
         Mockito.verify(advertisementRepository)
             .existsByIdAndAndCreator_Username(advertisementEntity.getId(), userEntity.getUsername());
-        Mockito.verify(advertisementRepository).findById(advertisementEntity.getId());
+        Mockito.verify(adEntityBuilder).queryAdvertisementEntity(advertisementEntity.getId());
         Mockito.verify(advertisementRepository).save(advertisementEntity);
         Mockito.verifyNoMoreInteractions(advertisementRepository);
     }
 
     @Test
-    public void testChangeStateShouldThrowUnknownAdvertisementExceptionIfAdNotExistsById() {
+    public void testChangeStateShouldThrowUnknownAdvertisementExceptionIfAdNotExistsById()
+        throws UnknownAdvertisementException {
         // Given
         Mockito.when(advertisementRepository
             .existsByIdAndAndCreator_Username(advertisementEntity.getId(), userEntity.getUsername()))
             .thenReturn(true);
-        Mockito.when(advertisementRepository.findById(advertisementEntity.getId())).thenReturn(
-            Optional.empty());
+        Mockito.when(adEntityBuilder.queryAdvertisementEntity(advertisementEntity.getId())).thenThrow(UnknownAdvertisementException.class);
         // When
         Assertions.assertThrows(UnknownAdvertisementException.class,
             () -> underTest.changeState(advertisementEntity.getId(), AdState.ACTIVE, userEntity.getUsername()));
         // Then
         Mockito.verify(advertisementRepository)
             .existsByIdAndAndCreator_Username(advertisementEntity.getId(), userEntity.getUsername());
-        Mockito.verify(advertisementRepository).findById(advertisementEntity.getId());
+        Mockito.verify(adEntityBuilder).queryAdvertisementEntity(advertisementEntity.getId());
         Mockito.verifyNoMoreInteractions(advertisementRepository);
     }
 
