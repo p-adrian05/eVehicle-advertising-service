@@ -1,4 +1,4 @@
-package org.example.core.security;
+package org.example.core.security.exception;
 
 import org.springframework.http.HttpStatus;
 

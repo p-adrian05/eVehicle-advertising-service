@@ -1,4 +1,4 @@
-package org.example.core.security;
+package org.example.core.security.jwt;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;

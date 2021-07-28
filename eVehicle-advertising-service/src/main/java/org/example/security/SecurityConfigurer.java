@@ -1,6 +1,7 @@
 package org.example.core.security;
 
 import lombok.RequiredArgsConstructor;
+import org.example.core.security.jwt.JwtTokenFilterConfigurer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
