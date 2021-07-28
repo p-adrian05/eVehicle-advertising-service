@@ -1,7 +1,7 @@
 package org.example.core.user;
 
 
-import org.example.core.security.AuthException;
+import org.example.security.exception.AuthException;
 
 public interface LoginService {
 

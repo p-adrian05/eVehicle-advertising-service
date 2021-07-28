@@ -2,8 +2,8 @@ package org.example.core.user.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.example.core.security.AuthException;
-import org.example.core.security.JwtTokenProvider;
+import org.example.security.exception.AuthException;
+import org.example.security.jwt.JwtTokenProvider;
 import org.example.core.user.LoginService;
 import org.example.core.user.persistence.entity.UserEntity;
 import org.example.core.user.persistence.repository.UserRepository;
@@ -33,7 +33,7 @@ public class LoginServiceImpl implements LoginService {
         Objects.requireNonNull(password, "Password cannot be null for login");
         Optional<UserEntity> user = userRepository.findByUsername(username);
         if (user.isEmpty()) {
-            throw new AuthException("Incorrect username or password");
+            throw new AuthException("User not found");
         }
         try {
             Authentication authentication = authenticationManager
@@ -45,7 +45,6 @@ public class LoginServiceImpl implements LoginService {
             e.printStackTrace();
             throw new AuthException("Incorrect username or password");
         }
-
     }
 
     @Override

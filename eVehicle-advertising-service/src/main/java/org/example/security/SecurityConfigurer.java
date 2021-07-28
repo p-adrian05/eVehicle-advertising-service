@@ -1,7 +1,8 @@
-package org.example.core.security;
+package org.example.security;
 
 import lombok.RequiredArgsConstructor;
-import org.example.core.security.jwt.JwtTokenFilterConfigurer;
+import org.example.core.role.model.Role;
+import org.example.security.jwt.JwtTokenFilterConfigurer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -34,9 +35,9 @@ public class SecurityConfigurer extends WebSecurityConfigurerAdapter {
     protected void configure(HttpSecurity http) throws Exception {
         http.csrf().disable()
                 .authorizeRequests()
-                .antMatchers(HttpMethod.DELETE,"/**").hasAnyAuthority("ADMIN")
-                .antMatchers(HttpMethod.POST,"/api/role").hasAnyAuthority("ADMIN")
-                .antMatchers(HttpMethod.PATCH,"/api/rate","/api/user/roles").hasAnyAuthority("ADMIN")
+                .antMatchers(HttpMethod.DELETE,"/**").hasAnyAuthority(Role.ADMIN.name())
+                .antMatchers(HttpMethod.POST,"/api/role").hasAnyAuthority(Role.ADMIN.name())
+                .antMatchers(HttpMethod.PATCH,"/api/rate","/api/user/roles").hasAnyAuthority(Role.ADMIN.name())
                 .antMatchers(HttpMethod.POST,"/api/authenticate").permitAll()
                 .antMatchers(HttpMethod.POST,"/api/auth").permitAll()
                 .antMatchers(HttpMethod.GET,"/api/authenticate/activate/*").permitAll()

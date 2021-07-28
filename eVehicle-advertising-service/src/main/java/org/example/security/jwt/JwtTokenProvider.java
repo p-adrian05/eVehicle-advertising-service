@@ -1,24 +1,26 @@
-package org.example.core.security.jwt;
+package org.example.security.jwt;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import lombok.RequiredArgsConstructor;
-
-import org.example.core.security.exception.InvalidTokenException;
+import org.example.security.exception.InvalidTokenException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Base64;
 import java.util.Date;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
@@ -31,9 +33,7 @@ public class JwtTokenProvider {
     @Value("${security.jwt.token.secret-key:secret-key}")
     private String secretKey;
     @Value("${security.jwt.token.expire-length:3600000}")
-    private final long validityInMilliseconds =  1000 * 60 * 60 * 24 * 3; // 1h
-
-    private final UserDetailsService userDetailsService;
+    private final long validityInMilliseconds = 36000000; // 10h
 
     @PostConstruct
     protected void init() {
@@ -41,28 +41,35 @@ public class JwtTokenProvider {
     }
 
     public String createToken(Authentication authentication) {
-
-        Claims claims = Jwts.claims().setSubject(authentication.getName());
-        claims.put("auth",authentication.getAuthorities());
-
-        Date now = new Date();
-        Date validity = new Date(now.getTime() + validityInMilliseconds);
+        Claims claims = Jwts.claims()
+            .setSubject(authentication.getName())
+            .setExpiration(new Date(System.currentTimeMillis() + validityInMilliseconds))
+            .setIssuedAt(new Date())
+            .setIssuer("Advertisement_Service")
+            .setAudience("Advertisement_Portal");
 
         return Jwts.builder()
-                .setSubject(authentication.getName())
-                .setClaims(claims)
-                .setIssuedAt(now)
-                .setExpiration(validity)
-                .signWith(SignatureAlgorithm.HS256, secretKey)
-                .compact();
-    }
-    public Authentication getAuthentication(String token) {
-        UserDetails userDetails = userDetailsService.loadUserByUsername(getUsername(token));
-        return new UsernamePasswordAuthenticationToken(userDetails, "", userDetails.getAuthorities());
+            .setClaims(claims)
+            .claim("auth",
+                authentication.getAuthorities().stream().map(GrantedAuthority::getAuthority)
+                    .collect(
+                        Collectors.toList()))
+            .signWith(SignatureAlgorithm.HS256, secretKey)
+            .compact();
     }
 
-    public String getUsername(String token) {
-        return Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token).getBody().getSubject();
+    public Authentication getAuthentication(String token) {
+        Jws<Claims> claims = getClaims(token);
+        String username = claims.getBody().getSubject();
+        List<GrantedAuthority> authorities =
+            ((List<String>) claims.getBody().get("auth")).stream().map(SimpleGrantedAuthority::new)
+                .collect(
+                    Collectors.toList());
+        return new UsernamePasswordAuthenticationToken(username, "", authorities);
+    }
+
+    private Jws<Claims> getClaims(String token) {
+        return Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token);
     }
 
     public String resolveToken(HttpServletRequest req) {
@@ -76,10 +83,10 @@ public class JwtTokenProvider {
     public boolean validateToken(String token) {
         try {
             Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token);
-            return true;
         } catch (JwtException | IllegalArgumentException e) {
-            throw new InvalidTokenException("Expired or invalid JWT token", HttpStatus.INTERNAL_SERVER_ERROR);
+            throw new InvalidTokenException("Expired or invalid JWT token", HttpStatus.FORBIDDEN);
         }
+        return true;
     }
 
 }

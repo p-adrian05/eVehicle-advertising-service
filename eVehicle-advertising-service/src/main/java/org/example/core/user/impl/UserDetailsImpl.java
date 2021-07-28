@@ -1,4 +1,4 @@
-package org.example.core.security;
+package org.example.core.user.impl;
 
 
 import org.example.core.role.model.Role;

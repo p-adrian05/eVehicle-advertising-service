@@ -1,8 +1,7 @@
-package org.example.core.security;
+package org.example.core.user.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.example.core.role.persistence.entity.RoleEntity;
 import org.example.core.user.model.AuthUserDto;
 import org.example.core.user.persistence.entity.UserEntity;
 import org.example.core.user.persistence.repository.UserRepository;

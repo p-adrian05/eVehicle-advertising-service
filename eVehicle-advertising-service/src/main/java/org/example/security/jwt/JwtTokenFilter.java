@@ -1,8 +1,8 @@
-package org.example.core.security.jwt;
+package org.example.security.jwt;
 
 import lombok.RequiredArgsConstructor;
 
-import org.example.core.security.exception.InvalidTokenException;
+import org.example.security.exception.InvalidTokenException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
