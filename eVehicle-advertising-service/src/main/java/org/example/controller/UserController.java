@@ -9,7 +9,7 @@ import org.example.controller.dto.user.UserRegistrationDto;
 import org.example.controller.dto.user.UsernameUpdateDto;
 import org.example.controller.util.ModelDtoConverter;
 import org.example.core.role.exception.UnknownRoleException;
-import org.example.core.security.AuthException;
+import org.example.security.exception.AuthException;
 import org.example.core.user.UserDataService;
 import org.example.core.user.UserService;
 import org.example.core.user.exception.EmailAlreadyExistsException;

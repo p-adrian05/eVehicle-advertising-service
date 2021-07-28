@@ -3,7 +3,7 @@ package org.example.core.email.impl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.core.email.EmailService;
-import org.example.core.security.AuthException;
+import org.example.security.exception.AuthException;
 import org.example.core.user.UserAfterCreatedObserver;
 import org.example.core.user.model.CreatedUserDto;
 import org.springframework.beans.factory.annotation.Value;

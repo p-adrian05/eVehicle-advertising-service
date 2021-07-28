@@ -71,7 +71,7 @@ public class AdDetailsServiceImpl implements AdDetailsService {
         log.info("Created AdDetails: {}", adDetailsDto);
     }
 
-    AdDetailsEntity convertAdDetailsToAdDetailsEntity(AdDetailsDto adDetails) {
+    private AdDetailsEntity convertAdDetailsToAdDetailsEntity(AdDetailsDto adDetails) {
         Objects.requireNonNull(adDetails, "AdDetailsDto cannot be null during converting");
         return AdDetailsEntity.builder()
             .adId(adDetails.getAdId())
@@ -84,7 +84,7 @@ public class AdDetailsServiceImpl implements AdDetailsService {
             .build();
     }
 
-    BasicAdDetailsEntity convertAdDetailsToBasicAdDetailsEntity(AdDetailsDto adDetails) {
+    private BasicAdDetailsEntity convertAdDetailsToBasicAdDetailsEntity(AdDetailsDto adDetails) {
         Objects.requireNonNull(adDetails, "AdDetailsDto cannot be null during converting");
         return BasicAdDetailsEntity.builder()
             .adId(adDetails.getAdId())

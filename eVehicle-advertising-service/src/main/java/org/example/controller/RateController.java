@@ -20,7 +20,7 @@ import org.example.core.rating.persistence.entity.RateState;
 import org.example.core.rating.persistence.entity.RateStatus;
 import org.example.core.rating.persistence.entity.UserRateState;
 import org.example.core.rating.persistence.repository.RateQueryParams;
-import org.example.core.security.AuthException;
+import org.example.security.exception.AuthException;
 import org.example.core.user.exception.UnknownUserException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;

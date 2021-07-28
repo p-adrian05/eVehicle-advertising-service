@@ -3,9 +3,7 @@ package org.example.core.role.impl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.core.role.RoleService;
-import org.example.core.role.exception.RoleAlreadyExistsException;
 import org.example.core.role.exception.RoleModificationException;
-import org.example.core.role.exception.UnknownRoleException;
 import org.example.core.role.model.Role;
 import org.example.core.role.persistence.entity.RoleEntity;
 import org.example.core.role.persistence.repository.RoleRepository;
@@ -18,7 +16,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -29,27 +26,6 @@ public class RoleServiceImpl implements RoleService {
 
     private final RoleRepository roleRepository;
     private final UserRepository userRepository;
-
-    @Override
-    public void createRole(Role role) throws RoleAlreadyExistsException {
-        Objects.requireNonNull(role, "Role cannot be null for creating");
-        if(roleRepository.existsByRoleName(role)){
-            throw new RoleAlreadyExistsException(String.format("Role already exists for creating %s",role));
-        }
-        roleRepository.save(RoleEntity.builder().roleName(role).build());
-        log.info("Created role: {}",role);
-    }
-
-    @Override
-    public void deleteRole(Role role) throws UnknownRoleException {
-        Objects.requireNonNull(role, "Role cannot be null for deleting");
-        Optional<RoleEntity> roleEntity = roleRepository.findRoleEntityByRoleName(role);
-        if(roleEntity.isEmpty()){
-            throw new UnknownRoleException(String.format("Role not exists for deleting %s",role));
-        }
-        roleRepository.delete(roleEntity.get());
-        log.info("Deleted role: {}",role);
-    }
 
     @Override
     @Transactional

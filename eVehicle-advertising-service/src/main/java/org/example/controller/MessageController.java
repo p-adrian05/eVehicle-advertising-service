@@ -14,7 +14,7 @@ import org.example.core.message.exception.UnknownMessageException;
 import org.example.core.message.exception.UpdateMessageException;
 import org.example.core.message.model.MessageDto;
 import org.example.core.message.model.MessagePartnerDto;
-import org.example.core.security.AuthException;
+import org.example.security.exception.AuthException;
 import org.example.core.user.exception.UnknownUserException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;

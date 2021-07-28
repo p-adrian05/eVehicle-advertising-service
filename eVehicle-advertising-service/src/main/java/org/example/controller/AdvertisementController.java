@@ -22,7 +22,7 @@ import org.example.core.advertising.model.CreateAdDto;
 import org.example.core.advertising.model.UpdateAdvertisementDto;
 import org.example.core.advertising.persistence.AdState;
 import org.example.core.advertising.persistence.repository.AdvertisementQueryParams;
-import org.example.core.security.AuthException;
+import org.example.security.exception.AuthException;
 import org.example.core.storage.AdImageStorageService;
 import org.example.core.user.exception.UnknownUserException;
 import org.springframework.data.domain.Page;
@@ -177,7 +177,7 @@ public class AdvertisementController {
                                     @Valid @ModelAttribute AdvertisementDetailsDto advertisementDetailsDto,
                                     @RequestParam MultipartFile[] images, BindingResult bindingResult)
         throws ValidationException, UnknownCategoryException,
-        UnknownUserException, UnknownAdvertisementException, FileUploadException, IOException {
+        UnknownUserException, UnknownAdvertisementException, IOException {
         if (!SecurityContextHolder.getContext().getAuthentication().getName()
             .equals(createAdvertisementDto.getCreator())) {
             throw new AuthException("Access Denied");
@@ -193,9 +193,6 @@ public class AdvertisementController {
         AdDetailsDto adDetailsDto = ModelDtoConverter.convertAdvertisementDetailsDtoToModel(advertisementDetailsDto, 0);
 
         advertisementService.createAdvertisement(advertisement, adDetailsDto, images);
-        Toolkit toolkit = Toolkit.getDefaultToolkit();
-        Image image = toolkit.createImage(images[0].getBytes(), 300, 300);
-        image.getScaledInstance(300, 200, 0);
     }
 
     private boolean checkIfImageIsValid(MultipartFile[] multipartFiles) {

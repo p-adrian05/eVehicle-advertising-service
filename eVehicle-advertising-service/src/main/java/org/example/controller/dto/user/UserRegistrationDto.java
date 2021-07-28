@@ -7,6 +7,7 @@ import org.example.controller.validation.FieldsVerification;
 
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 
@@ -22,8 +23,8 @@ import javax.validation.constraints.Size;
 })
 public class UserRegistrationDto {
 
-    @Size(min = 2,max = 15,message = "username: min 2 characters required, max 15 characters allowed")
-    @NotEmpty(message = "username: cannot be empty")
+    @Size(min = 3,max = 15,message = "username: min 2 characters required, max 15 characters allowed")
+    @NotNull(message = "username: cannot be null")
     private String username;
 
     @Email(message = "email: invalid")

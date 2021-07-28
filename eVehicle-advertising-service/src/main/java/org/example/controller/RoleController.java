@@ -6,19 +6,14 @@ import org.example.config.Mappings;
 import org.example.controller.dto.user.UpdateUserRolesDto;
 import org.example.controller.util.ModelDtoConverter;
 import org.example.core.role.RoleService;
-import org.example.core.role.exception.RoleAlreadyExistsException;
 import org.example.core.role.exception.RoleModificationException;
-import org.example.core.role.exception.UnknownRoleException;
 import org.example.core.role.model.Role;
 import org.example.core.user.exception.UnknownUserException;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -61,18 +56,6 @@ public class RoleController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     String.format("unknown operation: %s",updateUserRolesDto.getOperation()));
         }
-    }
-    @PostMapping(Mappings.ROLE)
-    @ResponseStatus(HttpStatus.CREATED)
-    @CrossOrigin
-    public void createRole(@RequestBody String role) throws RoleAlreadyExistsException {
-       roleService.createRole(Role.valueOf(role));
-    }
-    @DeleteMapping(Mappings.ROLE)
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    @CrossOrigin
-    public void deleteRole(@RequestBody String role) throws UnknownRoleException {
-        roleService.deleteRole(Role.valueOf(role));
     }
 
 }

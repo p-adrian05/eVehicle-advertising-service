@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.example.config.Mappings;
 import org.example.controller.dto.user.AuthenticationRequestDto;
 import org.example.controller.dto.user.AuthenticationResponseDto;
-import org.example.core.security.AuthException;
+import org.example.security.exception.AuthException;
 import org.example.core.user.LoginService;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;

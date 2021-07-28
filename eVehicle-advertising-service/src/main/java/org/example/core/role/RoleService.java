@@ -11,10 +11,6 @@ import java.util.List;
 
 public interface RoleService {
 
-    void createRole(Role role) throws RoleAlreadyExistsException;
-
-    void deleteRole(Role role) throws UnknownRoleException;
-
     void addRole(String username,Role role) throws UnknownUserException, RoleModificationException;
 
     void removeRole(String username,Role role) throws UnknownUserException, RoleModificationException;

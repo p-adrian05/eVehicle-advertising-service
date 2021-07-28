@@ -21,7 +21,7 @@ import org.example.core.advertising.persistence.repository.AdvertisementReposito
 import org.example.core.finance.bank.Bank;
 import org.example.core.finance.money.Money;
 import org.example.core.image.persistence.entity.ImageEntity;
-import org.example.core.security.AuthException;
+import org.example.security.exception.AuthException;
 import org.example.core.user.exception.UnknownUserException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -124,10 +124,7 @@ public class AdvertisementServiceImpl implements AdvertisementService {
         advertisementRepository.save(advertisementEntity);
     }
 
-
-
-
-    AdLabelDto convertAdvertisementEntityToLabelDto(AdvertisementEntity advertisementEntity, Currency currency) {
+   private AdLabelDto convertAdvertisementEntityToLabelDto(AdvertisementEntity advertisementEntity, Currency currency) {
         Objects.requireNonNull(advertisementEntity, "AdvertisementEntity cannot be null during converting");
         Objects.requireNonNull(advertisementEntity.getCurrency(), "Currency cannot be null during converting");
         Money money = new Money(advertisementEntity.getPrice(), Currency.getInstance(advertisementEntity.getCurrency()))
@@ -148,7 +145,7 @@ public class AdvertisementServiceImpl implements AdvertisementService {
             .build();
     }
 
-    BasicAdDetails convertBasicAdDetailsEntityToModel(BasicAdDetailsEntity basicAdDetailsEntity) {
+    private BasicAdDetails convertBasicAdDetailsEntityToModel(BasicAdDetailsEntity basicAdDetailsEntity) {
         Objects.requireNonNull(basicAdDetailsEntity, "BasicAdDetailsEntity cannot be null during converting");
         return BasicAdDetails.builder()
             .adId(basicAdDetailsEntity.getAdId())
@@ -162,7 +159,7 @@ public class AdvertisementServiceImpl implements AdvertisementService {
             .build();
     }
 
-    AdvertisementDto convertAdvertisementEntityToDto(AdvertisementEntity advertisementEntity,Currency currency) {
+    private  AdvertisementDto convertAdvertisementEntityToDto(AdvertisementEntity advertisementEntity,Currency currency) {
         Objects.requireNonNull(advertisementEntity, "AdvertisementEntity cannot be null during converting");
         Objects.requireNonNull(advertisementEntity.getCurrency(), "Currency cannot be null during converting");
         Money money = new Money(advertisementEntity.getPrice(), Currency.getInstance(advertisementEntity.getCurrency()))
