@@ -7,7 +7,6 @@ import org.example.config.Mappings;
 import org.example.controller.dto.message.CreateMessageDto;
 import org.example.controller.dto.message.DeleteMessageDto;
 import org.example.controller.dto.message.UpdateMessageDto;
-import org.example.controller.util.ModelDtoConverter;
 import org.example.core.message.MessageService;
 import org.example.core.message.exception.DeleteMessageException;
 import org.example.core.message.exception.UnknownMessageException;
@@ -22,7 +21,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -36,7 +34,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import javax.validation.Valid;
-import java.util.List;
+
 
 @Slf4j
 @RestController
@@ -89,18 +87,14 @@ public class MessageController {
     @PostMapping(Mappings.MESSAGE)
     @ResponseStatus(HttpStatus.CREATED)
     @CrossOrigin
-    public void createMessage(@Valid @RequestBody CreateMessageDto createMessageDto, BindingResult bindingResult)
-        throws ValidationException, UnknownUserException {
+    public void createMessage(@Valid @RequestBody CreateMessageDto createMessageDto)
+        throws UnknownUserException {
         if (!SecurityContextHolder.getContext().getAuthentication().getName()
             .equals(createMessageDto.getSenderUserName())) {
             throw new AuthException("Access Denied");
         }
         if (createMessageDto.getSenderUserName().equals(createMessageDto.getReceiverUsername())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Sender and receiver user can not be the same");
-        }
-        if (bindingResult.hasErrors()) {
-            List<String> errors = ModelDtoConverter.convertBindingErrorsToString(bindingResult.getAllErrors());
-            throw new ValidationException("Validation failed for creating user message", errors);
         }
         messageService.createMessage(MessageDto.builder()
             .content(createMessageDto.getContent())
@@ -112,15 +106,11 @@ public class MessageController {
     @PatchMapping(Mappings.MESSAGES)
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @CrossOrigin
-    public void updateMessage(@Valid @RequestBody UpdateMessageDto updateMessageDto, BindingResult bindingResult)
-        throws ValidationException, UpdateMessageException {
+    public void updateMessage(@Valid @RequestBody UpdateMessageDto updateMessageDto)
+        throws UpdateMessageException {
         if (!SecurityContextHolder.getContext().getAuthentication().getName()
             .equals(updateMessageDto.getSenderUsername())) {
             throw new AuthException("Access Denied");
-        }
-        if (bindingResult.hasErrors()) {
-            List<String> errors = ModelDtoConverter.convertBindingErrorsToString(bindingResult.getAllErrors());
-            throw new ValidationException("Validation failed for updating user message", errors);
         }
         messageService.updateMessage(updateMessageDto.getId(), updateMessageDto.getContent());
     }
@@ -128,30 +118,21 @@ public class MessageController {
     @PatchMapping(Mappings.MESSAGES + "/"+Mappings.READ)
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @CrossOrigin
-    public void readMessage(@Valid @RequestBody DeleteMessageDto readMessageDto, BindingResult bindingResult)
-        throws ValidationException, UnknownMessageException {
+    public void readMessage(@Valid @RequestBody DeleteMessageDto readMessageDto)
+        throws UnknownMessageException {
         if (!SecurityContextHolder.getContext().getAuthentication().getName()
             .equals(readMessageDto.getReceiverUsername())) {
             throw new AuthException("Access Denied");
         }
         log.error(readMessageDto.toString());
-        if (bindingResult.hasErrors()) {
-            List<String> errors = ModelDtoConverter.convertBindingErrorsToString(bindingResult.getAllErrors());
-            throw new ValidationException("Validation failed for updating user message", errors);
-        }
         messageService.readMessage(readMessageDto.getId(), readMessageDto.getReceiverUsername(),
             readMessageDto.getSenderUsername());
     }
 
     @DeleteMapping(Mappings.MESSAGES)
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void deleteMessage(@Valid @RequestBody DeleteMessageDto deleteMessageDto, BindingResult bindingResult)
-        throws ValidationException,
-        DeleteMessageException, UnknownMessageException, UnknownUserException {
-        if (bindingResult.hasErrors()) {
-            List<String> errors = ModelDtoConverter.convertBindingErrorsToString(bindingResult.getAllErrors());
-            throw new ValidationException("Validation failed for deleting user message", errors);
-        }
+    public void deleteMessage(@Valid @RequestBody DeleteMessageDto deleteMessageDto)
+        throws DeleteMessageException, UnknownMessageException, UnknownUserException {
         messageService.deleteMessage(MessageDto.builder()
             .id(deleteMessageDto.getId())
             .senderUserName(deleteMessageDto.getSenderUsername())

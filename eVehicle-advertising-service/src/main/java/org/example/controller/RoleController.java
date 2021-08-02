@@ -4,13 +4,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.config.Mappings;
 import org.example.controller.dto.user.UpdateUserRolesDto;
-import org.example.controller.util.ModelDtoConverter;
 import org.example.core.role.RoleService;
 import org.example.core.role.exception.RoleModificationException;
 import org.example.core.role.model.Role;
 import org.example.core.user.exception.UnknownUserException;
 import org.springframework.http.HttpStatus;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -42,12 +40,8 @@ public class RoleController {
     }
     @PatchMapping(Mappings.USER_ROLES)
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void modifyRole(@Valid @RequestBody UpdateUserRolesDto updateUserRolesDto,BindingResult bindingResult)
-        throws ValidationException, UnknownUserException, RoleModificationException {
-        if(bindingResult.hasErrors()){
-            List<String> errors = ModelDtoConverter.convertBindingErrorsToString(bindingResult.getAllErrors());
-            throw new ValidationException("Validation failed userRolesDto",errors);
-        }
+    public void modifyRole(@Valid @RequestBody UpdateUserRolesDto updateUserRolesDto)
+        throws UnknownUserException, RoleModificationException {
         if(updateUserRolesDto.getOperation().equals("add")){
             roleService.addRole(updateUserRolesDto.getUsername(),updateUserRolesDto.getRole());
         }else if(updateUserRolesDto.getOperation().equals("delete")){

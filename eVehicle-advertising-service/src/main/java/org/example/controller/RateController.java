@@ -27,7 +27,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -40,7 +39,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.Valid;
-import java.util.List;
 import java.util.Map;
 
 
@@ -96,15 +94,11 @@ public class RateController {
     @PostMapping(Mappings.RATE+"/buyer")
     @ResponseStatus(HttpStatus.CREATED)
     @CrossOrigin
-    public void createRateAsBuyer(@Valid @RequestBody CreateUserRateDto createUserRateDto, BindingResult bindingResult)
-        throws UnknownAdvertisementException, UnknownUserException, ValidationException, UserRateAlreadyExistsException,
+    public void createRateAsBuyer(@Valid @RequestBody CreateUserRateDto createUserRateDto)
+        throws UnknownAdvertisementException, UnknownUserException, UserRateAlreadyExistsException,
         UnknownUserRateException {
         if(!SecurityContextHolder.getContext().getAuthentication().getName().equals(createUserRateDto.getRatingUsername())){
             throw new AuthException("Access Denied");
-        }
-        if(bindingResult.hasErrors()){
-            List<String> errors = ModelDtoConverter.convertBindingErrorsToString(bindingResult.getAllErrors());
-            throw new ValidationException("Validation failed for creating rate as buyer",errors);
         }
         UserRateDto userRate = UserRateDto.builder()
             .rateState(createUserRateDto.getRateState())
@@ -119,15 +113,11 @@ public class RateController {
     @PostMapping(Mappings.RATE+"/seller")
     @ResponseStatus(HttpStatus.CREATED)
     @CrossOrigin
-    public void createRateAsSeller(@Valid @RequestBody CreateUserRateAsSellerDto createUserRateAsSellerDto, BindingResult bindingResult)
-        throws UnknownAdvertisementException, UnknownUserException, ValidationException,
+    public void createRateAsSeller(@Valid @RequestBody CreateUserRateAsSellerDto createUserRateAsSellerDto)
+        throws UnknownAdvertisementException, UnknownUserException,
         UnknownUserRateException, UserRateAlreadyExistsException {
         if(!SecurityContextHolder.getContext().getAuthentication().getName().equals(createUserRateAsSellerDto.getRatingUsername())){
             throw new AuthException("Access Denied");
-        }
-        if(bindingResult.hasErrors()){
-            List<String> errors = ModelDtoConverter.convertBindingErrorsToString(bindingResult.getAllErrors());
-            throw new ValidationException("Validation failed for creating rate as seller",errors);
         }
         UserRateDto userRate = UserRateDto.builder()
             .rateState(createUserRateAsSellerDto.getRateState())

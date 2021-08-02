@@ -33,7 +33,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -52,7 +51,6 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import javax.validation.Valid;
-import java.awt.Image;
 import java.awt.Toolkit;
 import java.io.IOException;
 import java.io.InputStream;
@@ -147,15 +145,11 @@ public class AdvertisementController {
     public void updateAdvertisement(@Valid @ModelAttribute CreateAdvertisementDto createAdvertisementDto,
                                     @Valid @ModelAttribute AdvertisementDetailsDto advertisementDetailsDto,
                                     @PathVariable int id,
-                                    @RequestParam MultipartFile[] images, BindingResult bindingResult)
-        throws UnknownAdvertisementException, ValidationException,
+                                    @RequestParam MultipartFile[] images)
+        throws UnknownAdvertisementException,
         UnknownCategoryException, UnknownUserException, FileUploadException {
-        if (bindingResult.hasErrors()) {
-            List<String> errors = ModelDtoConverter.convertBindingErrorsToString(bindingResult.getAllErrors());
-            throw new ValidationException("Validation failed for updated advertisement", errors);
-        }
         if(!checkIfImageIsValid(images)){
-            throw new ValidationException("Validation failed for images", List.of("Wrong image format"));
+            throw new FileUploadException("Not image format");
         }
         UpdateAdvertisementDto advertisement = UpdateAdvertisementDto.builder()
             .id(id)
@@ -175,19 +169,15 @@ public class AdvertisementController {
     @CrossOrigin
     public void createAdvertisement(@Valid @ModelAttribute CreateAdvertisementDto createAdvertisementDto,
                                     @Valid @ModelAttribute AdvertisementDetailsDto advertisementDetailsDto,
-                                    @RequestParam MultipartFile[] images, BindingResult bindingResult)
-        throws ValidationException, UnknownCategoryException,
+                                    @RequestParam MultipartFile[] images)
+        throws  UnknownCategoryException,
         UnknownUserException, UnknownAdvertisementException, IOException {
         if (!SecurityContextHolder.getContext().getAuthentication().getName()
             .equals(createAdvertisementDto.getCreator())) {
             throw new AuthException("Access Denied");
         }
         if(!checkIfImageIsValid(images)){
-            throw new ValidationException("Validation failed for images", List.of("Wrong image format"));
-        }
-        if (bindingResult.hasErrors()) {
-            List<String> errors = ModelDtoConverter.convertBindingErrorsToString(bindingResult.getAllErrors());
-            throw new ValidationException("Validation failed for creating advertisement", errors);
+            throw new FileUploadException("Not image format");
         }
         CreateAdDto advertisement = ModelDtoConverter.createNewAdvertisementFromDto(createAdvertisementDto);
         AdDetailsDto adDetailsDto = ModelDtoConverter.convertAdvertisementDetailsDtoToModel(advertisementDetailsDto, 0);
@@ -249,15 +239,11 @@ public class AdvertisementController {
 
     @PatchMapping(Mappings.USER_SAVED_AD)
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void modifyMarkedAd(@Valid @RequestBody UserMarkedAdDto userMarkedAdDto, BindingResult bindingResult)
-        throws UnknownUserException, UnknownAdvertisementException, ValidationException,
+    public void modifyMarkedAd(@Valid @RequestBody UserMarkedAdDto userMarkedAdDto)
+        throws UnknownUserException, UnknownAdvertisementException,
         MaximumSavedAdsReachedException {
         if (!SecurityContextHolder.getContext().getAuthentication().getName().equals(userMarkedAdDto.getUsername())) {
             throw new AuthException("Access Denied");
-        }
-        if (bindingResult.hasErrors()) {
-            List<String> errors = ModelDtoConverter.convertBindingErrorsToString(bindingResult.getAllErrors());
-            throw new ValidationException("Validation failed userMarkedAdDto", errors);
         }
         if (userMarkedAdDto.getOperation().equals("add")) {
             adUtilService.addSaveAd(userMarkedAdDto.getUsername(), userMarkedAdDto.getAdId());

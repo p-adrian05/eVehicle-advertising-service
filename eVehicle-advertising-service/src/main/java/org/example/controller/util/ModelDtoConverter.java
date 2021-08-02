@@ -10,12 +10,8 @@ import org.example.core.advertising.model.AdDetailsDto;
 import org.example.core.advertising.model.CreateAdDto;
 import org.example.core.user.model.UserDataDto;
 import org.example.core.user.model.UserDto;
-import org.springframework.context.support.DefaultMessageSourceResolvable;
-import org.springframework.validation.ObjectError;
 
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public class ModelDtoConverter {
 
@@ -40,14 +36,6 @@ public class ModelDtoConverter {
                     .phoneNumber(updateUserDataDto.getPhoneNumber())
                     .build();
     }
-
-    public static List<String> convertBindingErrorsToString(List<ObjectError> errors){
-        return errors.stream()
-                .map(DefaultMessageSourceResolvable::getDefaultMessage)
-                .collect(Collectors.toList());
-    }
-
-
     public static CreateAdDto createNewAdvertisementFromDto(CreateAdvertisementDto createAdvertisementDto){
         return CreateAdDto.builder()
                 .creator(createAdvertisementDto.getCreator())
