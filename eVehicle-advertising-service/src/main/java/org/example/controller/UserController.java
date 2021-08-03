@@ -19,6 +19,7 @@ import org.example.core.user.model.CreateUserDto;
 import org.example.core.user.model.UserDataDto;
 import org.example.core.user.model.UserDto;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -32,9 +33,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import javax.validation.Valid;
 
+import java.net.URI;
 import java.util.Optional;
 
 
@@ -56,6 +59,7 @@ public class UserController {
             return ModelDtoConverter.convertUserToUserBasicDto(userDto.get());
         }
         throw new ResponseStatusException(HttpStatus.NOT_FOUND,"User not found");
+
     }
     @GetMapping(Mappings.USER+"/{username}/"+Mappings.DETAILS)
     @CrossOrigin
@@ -76,15 +80,16 @@ public class UserController {
         userDataService.updateUserData(ModelDtoConverter.convertUserDataDtoToUserData(updateUserDataDto));
     }
     @PostMapping(Mappings.USER)
-    @ResponseStatus(HttpStatus.CREATED)
     @CrossOrigin
-    public void createUser(@Valid @RequestBody UserRegistrationDto userRegistrationDto)
+    public ResponseEntity<Object> createUser(@Valid @RequestBody UserRegistrationDto userRegistrationDto)
             throws UnknownRoleException, EmailAlreadyExistsException, UsernameAlreadyExistsException{
-        userService.createUser(CreateUserDto.builder()
+        int id = userService.createUser(CreateUserDto.builder()
             .username(userRegistrationDto.getUsername())
             .email(userRegistrationDto.getEmail())
             .password(userRegistrationDto.getPassword())
             .build());
+        URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").buildAndExpand(id).toUri();
+        return ResponseEntity.created(location).build();
     }
 
 

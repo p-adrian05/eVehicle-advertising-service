@@ -7,7 +7,7 @@ import java.sql.Timestamp;
 
 @Builder
 @Data
-public class UserBasicDto {
+public class UserBasicDto{
 
     private String username;
 

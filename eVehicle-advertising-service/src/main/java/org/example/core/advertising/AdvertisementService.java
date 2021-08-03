@@ -21,7 +21,7 @@ import java.util.Optional;
 
 public interface AdvertisementService {
 
-    void createAdvertisement(CreateAdDto advertisementDto, AdDetailsDto adDetailsDto, MultipartFile[] images)
+    int createAdvertisement(CreateAdDto advertisementDto, AdDetailsDto adDetailsDto, MultipartFile[] images)
         throws
         UnknownUserException, UnknownCategoryException, UnknownAdvertisementException, FileUploadException;
 

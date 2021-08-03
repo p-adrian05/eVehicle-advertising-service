@@ -32,6 +32,7 @@ import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -49,11 +50,13 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import javax.validation.Valid;
 import java.awt.Toolkit;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.util.Collection;
 import java.util.Currency;
 import java.util.List;
@@ -167,9 +170,9 @@ public class AdvertisementController {
 
     @PostMapping(value = Mappings.ADVERTISEMENT, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @CrossOrigin
-    public void createAdvertisement(@Valid @ModelAttribute CreateAdvertisementDto createAdvertisementDto,
-                                    @Valid @ModelAttribute AdvertisementDetailsDto advertisementDetailsDto,
-                                    @RequestParam MultipartFile[] images)
+    public ResponseEntity<Object> createAdvertisement(@Valid @ModelAttribute CreateAdvertisementDto createAdvertisementDto,
+                                              @Valid @ModelAttribute AdvertisementDetailsDto advertisementDetailsDto,
+                                              @RequestParam MultipartFile[] images)
         throws  UnknownCategoryException,
         UnknownUserException, UnknownAdvertisementException, IOException {
         if (!SecurityContextHolder.getContext().getAuthentication().getName()
@@ -182,7 +185,9 @@ public class AdvertisementController {
         CreateAdDto advertisement = ModelDtoConverter.createNewAdvertisementFromDto(createAdvertisementDto);
         AdDetailsDto adDetailsDto = ModelDtoConverter.convertAdvertisementDetailsDtoToModel(advertisementDetailsDto, 0);
 
-        advertisementService.createAdvertisement(advertisement, adDetailsDto, images);
+        int id = advertisementService.createAdvertisement(advertisement, adDetailsDto, images);
+        URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").buildAndExpand(id).toUri();
+        return ResponseEntity.created(location).build();
     }
 
     private boolean checkIfImageIsValid(MultipartFile[] multipartFiles) {

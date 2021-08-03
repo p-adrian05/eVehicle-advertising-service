@@ -31,7 +31,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public void createUser(@NonNull CreateUserDto createUserDto) throws UsernameAlreadyExistsException, EmailAlreadyExistsException {
+    public int createUser(@NonNull CreateUserDto createUserDto) throws UsernameAlreadyExistsException, EmailAlreadyExistsException {
         Objects.requireNonNull(createUserDto, "CreatUserDto cannot be null for creating user");
         Objects.requireNonNull(createUserDto.getEmail(), "Email cannot be null for creating user");
         Objects.requireNonNull(createUserDto.getUsername(), "Username cannot be null for creating user");
@@ -51,6 +51,7 @@ public class UserServiceImpl implements UserService {
             .username(savedUserEntity.getUsername())
             .build());
         log.info("Created user entity: {}",userEntity);
+        return savedUserEntity.getId();
     }
 
     @Override

@@ -12,7 +12,7 @@ import java.util.Optional;
 
 public interface UserService {
 
-    void createUser(CreateUserDto user) throws UsernameAlreadyExistsException, UnknownRoleException, EmailAlreadyExistsException;
+    int createUser(CreateUserDto user) throws UsernameAlreadyExistsException, UnknownRoleException, EmailAlreadyExistsException;
 
     void deleteUser(String username) throws UnknownUserException;
 

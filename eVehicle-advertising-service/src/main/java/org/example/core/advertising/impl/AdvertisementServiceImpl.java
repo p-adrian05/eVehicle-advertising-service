@@ -48,8 +48,8 @@ public class AdvertisementServiceImpl implements AdvertisementService {
 
     @Override
     @Transactional
-    public void createAdvertisement(CreateAdDto advertisementDto, AdDetailsDto adDetailsDto,
-                                    MultipartFile[] imageFiles)
+    public int createAdvertisement(CreateAdDto advertisementDto, AdDetailsDto adDetailsDto,
+                                   MultipartFile[] imageFiles)
         throws UnknownUserException, UnknownCategoryException, FileUploadException {
         Objects.requireNonNull(advertisementDto, "AdvertisementDto cannot be null during creation");
         Objects.requireNonNull(adDetailsDto, "AdDetailsDto cannot be null during creation");
@@ -59,6 +59,7 @@ public class AdvertisementServiceImpl implements AdvertisementService {
         log.info("New advertisementEntity: {}", newAdvertisementEntity);
 
         adDetailsService.createAdDetails(adDetailsDto, newAdvertisementEntity);
+        return newAdvertisementEntity.getId();
     }
 
     @Override
